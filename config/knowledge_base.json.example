@@ -1,0 +1,56 @@
+[
+  {
+    "id": "faq_001",
+    "type": "faq",
+    "content": "¿Cómo rastreo mi pedido? Puedes consultar el estado de tu pedido enviando el comando 'estado' o escribiendo tu número de orden.",
+    "metadata": {
+      "category": "tracking",
+      "keywords": ["rastrear", "seguimiento", "donde esta", "estado"]
+    }
+  },
+  {
+    "id": "faq_002",
+    "type": "faq",
+    "content": "¿Cuál es el tiempo de entrega? El tiempo promedio de entrega es de 30-45 minutos, dependiendo de tu zona.",
+    "metadata": {
+      "category": "delivery",
+      "keywords": ["tiempo", "cuanto tarda", "demora", "minutos"]
+    }
+  },
+  {
+    "id": "faq_003",
+    "type": "faq",
+    "content": "¿Puedo modificar mi pedido? Sí, puedes modificar tu pedido antes de que sea confirmado. Escribe 'cancelar' y vuelve a empezar.",
+    "metadata": {
+      "category": "orders",
+      "keywords": ["modificar", "cambiar", "editar", "corregir"]
+    }
+  },
+  {
+    "id": "faq_004",
+    "type": "faq",
+    "content": "¿Hacen entregas fuera de la ciudad? Actualmente solo entregamos dentro de las zonas configuradas. Consulta nuestras zonas de entrega.",
+    "metadata": {
+      "category": "delivery",
+      "keywords": ["zona", "fuera", "ciudad", "lejos"]
+    }
+  },
+  {
+    "id": "policy_001",
+    "type": "policy",
+    "content": "Política de devoluciones: Si tu pedido llega en mal estado o incorrecto, contáctanos inmediatamente para una solución.",
+    "metadata": {
+      "category": "policies"
+    }
+  },
+  {
+    "id": "promo_001",
+    "type": "promotion",
+    "content": "Promoción vigente: 20% de descuento en tu primer pedido. Aplica automáticamente.",
+    "metadata": {
+      "category": "promotions",
+      "valid_until": "2026-12-31",
+      "active": true
+    }
+  }
+]
