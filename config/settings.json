@@ -1,94 +1,56 @@
 {
   "business": {
-    "name": "Mi Negocio",
-    "description": "Servicio de delivery rápido y confiable",
+    "name": "ISP Soporte",
+    "description": "Soporte técnico y atención al cliente para tu servicio de internet",
     "phone": "+1234567890",
-    "email": "info@minegocio.com",
-    "address": "Calle Principal 123"
+    "email": "soporte@ispproveedor.com",
+    "address": "Av. Tecnología 456"
   },
   "delivery": {
-    "zones": [
-      {
-        "name": "Zona Centro",
-        "radius_km": 5,
-        "delivery_fee": 3.0,
-        "estimated_time_minutes": 30
-      },
-      {
-        "name": "Zona Extendida",
-        "radius_km": 10,
-        "delivery_fee": 5.0,
-        "estimated_time_minutes": 45
-      }
-    ],
+    "zones": [],
     "working_hours": {
-      "monday": {"open": "09:00", "close": "21:00"},
-      "tuesday": {"open": "09:00", "close": "21:00"},
-      "wednesday": {"open": "09:00", "close": "21:00"},
-      "thursday": {"open": "09:00", "close": "21:00"},
-      "friday": {"open": "09:00", "close": "22:00"},
-      "saturday": {"open": "10:00", "close": "22:00"},
-      "sunday": {"open": "10:00", "close": "20:00"}
+      "monday": {
+        "open": "08:00",
+        "close": "22:00"
+      },
+      "tuesday": {
+        "open": "08:00",
+        "close": "22:00"
+      },
+      "wednesday": {
+        "open": "08:00",
+        "close": "22:00"
+      },
+      "thursday": {
+        "open": "08:00",
+        "close": "22:00"
+      },
+      "friday": {
+        "open": "08:00",
+        "close": "22:00"
+      },
+      "saturday": {
+        "open": "09:00",
+        "close": "20:00"
+      },
+      "sunday": {
+        "open": "09:00",
+        "close": "18:00"
+      }
     }
   },
   "menu": {
-    "categories": [
-      {
-        "id": "cat_001",
-        "name": "Comidas",
-        "items": [
-          {
-            "id": "item_001",
-            "name": "Hamburguesa Clásica",
-            "description": "Carne de res, lechuga, tomate, queso",
-            "price": 8.99,
-            "available": true
-          },
-          {
-            "id": "item_002",
-            "name": "Pizza Margarita",
-            "description": "Salsa de tomate, mozzarella, albahaca",
-            "price": 12.99,
-            "available": true
-          }
-        ]
-      },
-      {
-        "id": "cat_002",
-        "name": "Bebidas",
-        "items": [
-          {
-            "id": "item_003",
-            "name": "Refresco 500ml",
-            "description": "Coca-Cola, Pepsi, Sprite",
-            "price": 1.99,
-            "available": true
-          },
-          {
-            "id": "item_004",
-            "name": "Agua Mineral",
-            "description": "Agua embotellada 500ml",
-            "price": 0.99,
-            "available": true
-          }
-        ]
-      }
-    ]
+    "categories": []
   },
   "payment_methods": [
     {
-      "id": "cash",
-      "name": "Efectivo",
-      "enabled": true
-    },
-    {
       "id": "card",
-      "name": "Tarjeta",
+      "name": "Tarjeta de Crédito/Débito",
       "enabled": true
     },
     {
       "id": "transfer",
-      "name": "Transferencia",
+      "name": "Transferencia Bancaria",
       "enabled": true
     }
   ]

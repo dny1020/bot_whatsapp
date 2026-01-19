@@ -1,0 +1,47 @@
+[
+  {
+    "id": "isp_001",
+    "type": "faq",
+    "content": "¿Qué hago si no tengo internet? 1. Verifica que el router esté encendido. 2. Reinicia el router desconectándolo de la corriente por 30 segundos. 3. Revisa que los cables (WAN/LAN) estén bien conectados. Si el problema persiste, solicita un ticket de soporte.",
+    "metadata": {
+      "category": "tecnico",
+      "keywords": ["no tengo internet", "sin conexión", "caido", "falla", "internet lento"]
+    }
+  },
+  {
+    "id": "isp_002",
+    "type": "faq",
+    "content": "¿Cómo cambio la contraseña del Wi-Fi? Puedes cambiarla ingresando a la dirección IP 192.168.1.1 en tu navegador con las credenciales que se encuentran en la etiqueta detrás de tu router, en la sección 'Wireless Settings'.",
+    "metadata": {
+      "category": "configuracion",
+      "keywords": ["contraseña", "wifi", "password", "cambiar clave", "nombre red"]
+    }
+  },
+  {
+    "id": "isp_003",
+    "type": "faq",
+    "content": "¿Cómo puedo pagar mi factura? Puedes pagar a través de nuestra aplicación móvil, en el portal web de clientes o en puntos físicos autorizados (Western Union, Pago Fácil) con tu número de cliente.",
+    "metadata": {
+      "category": "pagos",
+      "keywords": ["pagar", "factura", "recibo", "deuda", "cuanto debo"]
+    }
+  },
+  {
+    "id": "isp_004",
+    "type": "faq",
+    "content": "¿Cuáles son los planes disponibles? Ofrecemos planes de 100MB, 300MB y 600MB de fibra óptica simétrica. Escribe 'planes' para enviarte la información detallada de costos.",
+    "metadata": {
+      "category": "ventas",
+      "keywords": ["planes", "precios", "megas", "fibra", "nueva linea"]
+    }
+  },
+  {
+    "id": "isp_005",
+    "type": "process",
+    "content": "Proceso para reportar una avería: Necesitamos tu número de cliente y una descripción breve del fallo. Nuestros técnicos revisarán la señal remotamente primero.",
+    "metadata": {
+      "category": "tecnico",
+      "keywords": ["reportar", "averia", "falla tecnica", "ticket", "visita"]
+    }
+  }
+]

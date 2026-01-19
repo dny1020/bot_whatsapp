@@ -5,13 +5,11 @@ services:
     image: postgres:15-alpine
     container_name: chatbot_postgres
     environment:
-      POSTGRES_USER: chatbot
-      POSTGRES_PASSWORD: chatbot_password
-      POSTGRES_DB: chatbot_db
+      POSTGRES_USER: ${POSTGRES_USER:-chatbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbot_password}
+      POSTGRES_DB: ${POSTGRES_DB:-chatbot_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U chatbot"]
       interval: 10s
@@ -19,12 +17,18 @@ services:
       retries: 5
     networks:
       - chatbot_network
+    restart: unless-stopped
+    # OPTIMIZACIÓN: Límite de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
 
   redis:
     image: redis:7-alpine
     container_name: chatbot_redis
-    ports:
-      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     healthcheck:
@@ -34,16 +38,26 @@ services:
       retries: 5
     networks:
       - chatbot_network
+    restart: unless-stopped
+    # OPTIMIZACIÓN: Límite de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
 
   backend:
     build:
       context: .
       dockerfile: docker/Dockerfile.backend
     container_name: chatbot_backend
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - .env
+    environment:
+      # OPTIMIZACIÓN: Limitar workers de uvicorn
+      WEB_CONCURRENCY: 2
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,18 +65,35 @@ services:
         condition: service_healthy
     volumes:
       - ./logs:/app/logs
-      - ./config:/app/config
+      - ./config:/app/config:ro  # Read-only para seguridad
     restart: unless-stopped
     networks:
       - chatbot_network
+      - traefik_net
+    # OPTIMIZACIÓN: Límite de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 1G  # Reducido de 2-4GB
+          cpus: '1.0'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_net"
+      - "traefik.http.routers.chatbot-backend.rule=Host(`${DOMAIN:-bot.example.com}`)"
+      - "traefik.http.routers.chatbot-backend.entrypoints=websecure"
+      - "traefik.http.routers.chatbot-backend.tls=true"
+      - "traefik.http.routers.chatbot-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.chatbot-backend.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.chatbot-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.chatbot-ratelimit.ratelimit.burst=50"
 
   webhook:
     build:
       context: .
       dockerfile: docker/Dockerfile.webhook
     container_name: chatbot_webhook
-    ports:
-      - "8001:8001"
+    expose:
+      - "8001"
     env_file:
       - .env
     depends_on:
@@ -72,10 +103,29 @@ services:
         condition: service_healthy
     volumes:
       - ./logs:/app/logs
-      - ./config:/app/config
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - chatbot_network
+      - traefik_net
+    # OPTIMIZACIÓN: Límite de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_net"
+      - "traefik.http.routers.chatbot-webhook.rule=Host(`${DOMAIN:-bot.example.com}`) && PathPrefix(`/webhook`)"
+      - "traefik.http.routers.chatbot-webhook.entrypoints=websecure"
+      - "traefik.http.routers.chatbot-webhook.tls=true"
+      - "traefik.http.routers.chatbot-webhook.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.chatbot-webhook.priority=100"
+      - "traefik.http.services.chatbot-webhook.loadbalancer.server.port=8001"
+      - "traefik.http.middlewares.webhook-ratelimit.ratelimit.average=20"
+      - "traefik.http.middlewares.webhook-ratelimit.ratelimit.burst=10"
+      - "traefik.http.routers.chatbot-webhook.middlewares=webhook-ratelimit"
 
 volumes:
   postgres_data:
@@ -84,3 +134,5 @@ volumes:
 networks:
   chatbot_network:
     driver: bridge
+  traefik_net:
+    external: true
