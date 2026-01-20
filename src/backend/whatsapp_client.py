@@ -21,6 +21,7 @@ class WhatsAppClient:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json"
         }
+        self.mock_mode = settings.enable_mock_whatsapp
     
     async def send_text_message(
         self, 
@@ -31,6 +32,11 @@ class WhatsAppClient:
         """Send text message"""
         url = f"{self.base_url}/{self.phone_id}/messages"
         
+        if self.mock_mode:
+            print(f"\n[MOCK WHATSAPP] To: {to}\nMessage: {message}\n")
+            logger.info("mock_message_sent", to=to)
+            return {"messages": [{"id": "mock_id"}]}
+
         payload = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",

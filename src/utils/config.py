@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     enable_image_processing: bool = Field(default=False, alias="ENABLE_IMAGE_PROCESSING")
     enable_location_tracking: bool = Field(default=False, alias="ENABLE_LOCATION_TRACKING")
     
+    # Demo/Mock Mode
+    enable_mock_whatsapp: bool = Field(default=False, alias="ENABLE_MOCK_WHATSAPP")
+    
     class Config:
         env_file = ".env"
         case_sensitive = False

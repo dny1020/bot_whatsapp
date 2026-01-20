@@ -2,46 +2,111 @@
   {
     "id": "isp_001",
     "type": "faq",
-    "content": "¿Qué hago si no tengo internet? 1. Verifica que el router esté encendido. 2. Reinicia el router desconectándolo de la corriente por 30 segundos. 3. Revisa que los cables (WAN/LAN) estén bien conectados. Si el problema persiste, solicita un ticket de soporte.",
+    "content": "¿Qué hago si no tengo internet? 1. Verifica que el router esté encendido. 2. Reinicia el router desconectándolo de la corriente por 30 segundos. 3. Revisa que los cables (WAN/LAN) estén bien conectados. 4. Verifica si el indicador 'LOS' o 'ALARM' está en rojo (esto indica corte de fibra). Si persiste, solicita un ticket.",
     "metadata": {
       "category": "tecnico",
-      "keywords": ["no tengo internet", "sin conexión", "caido", "falla", "internet lento"]
+      "keywords": [
+        "no tengo internet",
+        "sin conexión",
+        "caido",
+        "falla",
+        "internet lento",
+        "los rojo"
+      ]
     }
   },
   {
     "id": "isp_002",
     "type": "faq",
-    "content": "¿Cómo cambio la contraseña del Wi-Fi? Puedes cambiarla ingresando a la dirección IP 192.168.1.1 en tu navegador con las credenciales que se encuentran en la etiqueta detrás de tu router, en la sección 'Wireless Settings'.",
+    "content": "¿Cómo cambio la contraseña del Wi-Fi? Ingresa a 192.168.1.1 en tu navegador. El usuario/contraseña suele ser admin/admin o los que figuran en la etiqueta del router. Busca la sección 'Wireless Settings' o 'WLAN Setup' y actualiza el SSID (nombre) y la WPA Key (contraseña).",
     "metadata": {
       "category": "configuracion",
-      "keywords": ["contraseña", "wifi", "password", "cambiar clave", "nombre red"]
+      "keywords": [
+        "contraseña",
+        "wifi",
+        "password",
+        "cambiar clave",
+        "nombre red",
+        "ssid"
+      ]
     }
   },
   {
     "id": "isp_003",
     "type": "faq",
-    "content": "¿Cómo puedo pagar mi factura? Puedes pagar a través de nuestra aplicación móvil, en el portal web de clientes o en puntos físicos autorizados (Western Union, Pago Fácil) con tu número de cliente.",
+    "content": "¿Cómo puedo pagar mi factura? Pagos en línea por PSE o nuestra App. También en puntos físicos Efecty/Baloto con tu número de contrato. El pago se refleja en máximo 2 horas. Si fue suspendido, el servicio se reactiva automáticamente.",
     "metadata": {
       "category": "pagos",
-      "keywords": ["pagar", "factura", "recibo", "deuda", "cuanto debo"]
+      "keywords": [
+        "pagar",
+        "factura",
+        "recibo",
+        "deuda",
+        "cuanto debo",
+        "pse",
+        "suspension"
+      ]
     }
   },
   {
     "id": "isp_004",
     "type": "faq",
-    "content": "¿Cuáles son los planes disponibles? Ofrecemos planes de 100MB, 300MB y 600MB de fibra óptica simétrica. Escribe 'planes' para enviarte la información detallada de costos.",
+    "content": "¿Cuáles son los planes de Fibra? Ofrecemos: 1. Fibra 100MB ($20) - Ideal para 3-5 dispositivos. 2. Fibra 300MB ($35) - Streaming 4K y Home Office. 3. Fibra 600MB ($50) - Gaming y múltiples usuarios pesados. Todos incluyen IP dinâmica pública.",
     "metadata": {
       "category": "ventas",
-      "keywords": ["planes", "precios", "megas", "fibra", "nueva linea"]
+      "keywords": [
+        "planes",
+        "precios",
+        "megas",
+        "fibra",
+        "nueva linea",
+        "costo"
+      ]
     }
   },
   {
-    "id": "isp_005",
-    "type": "process",
-    "content": "Proceso para reportar una avería: Necesitamos tu número de cliente y una descripción breve del fallo. Nuestros técnicos revisarán la señal remotamente primero.",
+    "id": "isp_006",
+    "type": "faq",
+    "content": "Soporte DNS: Si tienes navegación lenta o páginas que no cargan, prueba configurar los DNS de Google (8.8.8.8) o Cloudflare (1.1.1.1) en tu dispositivo. Esto suele mejorar la respuesta de carga de sitios web.",
     "metadata": {
       "category": "tecnico",
-      "keywords": ["reportar", "averia", "falla tecnica", "ticket", "visita"]
+      "keywords": [
+        "dns",
+        "navegacion lenta",
+        "paginas no cargan",
+        "google dns",
+        "cloudflare"
+      ]
+    }
+  },
+  {
+    "id": "isp_007",
+    "type": "faq",
+    "content": "Latencia y Gaming: Para juegos en línea, usa siempre cable Ethernet. El Wi-Fi sufre de interferencias que suben el PING. Si notas 'lag', verifica que no haya descargas pesadas en segundo plano o dispositivos haciendo backup en la nube.",
+    "metadata": {
+      "category": "tecnico",
+      "keywords": [
+        "ping",
+        "lag",
+        "gaming",
+        "latencia",
+        "juegos"
+      ]
+    }
+  },
+  {
+    "id": "isp_008",
+    "type": "process",
+    "content": "Reporte de Daños Físicos: Si un cable de fibra en la calle se rompió o el router se dañó por rayo, envíanos una foto del daño. Enviaremos una brigada técnica en un plazo de 24-48 horas hábiles.",
+    "metadata": {
+      "category": "tecnico",
+      "keywords": [
+        "cable roto",
+        "rayo",
+        "daño fisico",
+        "foto",
+        "tecnico"
+      ]
     }
   }
 ]

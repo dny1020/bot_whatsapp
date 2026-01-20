@@ -22,8 +22,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: '0.5'
+          memory: 256M
+          cpus: '0.25'
 
   redis:
     image: redis:7-alpine
@@ -47,16 +47,13 @@ services:
           cpus: '0.25'
 
   backend:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.backend
+    image: ghcr.io/${GITHUB_REPOSITORY:-dny/bot_whatsapp}/backend:latest
     container_name: chatbot_backend
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     env_file:
       - .env
     environment:
-      # OPTIMIZACIÓN: Limitar workers de uvicorn
       WEB_CONCURRENCY: 2
     depends_on:
       postgres:
@@ -65,17 +62,16 @@ services:
         condition: service_healthy
     volumes:
       - ./logs:/app/logs
-      - ./config:/app/config:ro  # Read-only para seguridad
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - chatbot_network
       - traefik_net
-    # OPTIMIZACIÓN: Límite de recursos
     deploy:
       resources:
         limits:
-          memory: 1G  # Reducido de 2-4GB
-          cpus: '1.0'
+          memory: 512M
+          cpus: '0.5'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_net"
@@ -84,16 +80,12 @@ services:
       - "traefik.http.routers.chatbot-backend.tls=true"
       - "traefik.http.routers.chatbot-backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.chatbot-backend.loadbalancer.server.port=8000"
-      - "traefik.http.middlewares.chatbot-ratelimit.ratelimit.average=100"
-      - "traefik.http.middlewares.chatbot-ratelimit.ratelimit.burst=50"
 
   webhook:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.webhook
+    image: ghcr.io/${GITHUB_REPOSITORY:-dny/bot_whatsapp}/webhook:latest
     container_name: chatbot_webhook
-    expose:
-      - "8001"
+    ports:
+      - "8001:8001"
     env_file:
       - .env
     depends_on:
@@ -108,7 +100,6 @@ services:
     networks:
       - chatbot_network
       - traefik_net
-    # OPTIMIZACIÓN: Límite de recursos
     deploy:
       resources:
         limits:
@@ -123,9 +114,6 @@ services:
       - "traefik.http.routers.chatbot-webhook.tls.certresolver=letsencrypt"
       - "traefik.http.routers.chatbot-webhook.priority=100"
       - "traefik.http.services.chatbot-webhook.loadbalancer.server.port=8001"
-      - "traefik.http.middlewares.webhook-ratelimit.ratelimit.average=20"
-      - "traefik.http.middlewares.webhook-ratelimit.ratelimit.burst=10"
-      - "traefik.http.routers.chatbot-webhook.middlewares=webhook-ratelimit"
 
 volumes:
   postgres_data:
