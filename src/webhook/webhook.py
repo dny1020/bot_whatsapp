@@ -4,8 +4,8 @@ WhatsApp Webhook endpoint
 from fastapi import FastAPI, Request, Response, HTTPException, status
 from typing import Dict, Any
 from src.backend.message_processor import message_processor
-from utils.config import settings
-from utils.logger import setup_logging, get_logger
+from src.utils.config import settings
+from src.utils.logger import setup_logging, get_logger
 
 setup_logging()
 logger = get_logger(__name__)
