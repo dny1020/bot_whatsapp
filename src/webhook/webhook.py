@@ -3,10 +3,7 @@ WhatsApp Webhook endpoint
 """
 from fastapi import FastAPI, Request, Response, HTTPException, status
 from typing import Dict, Any
-import sys
-sys.path.append('/home/debian/project/src')
-
-from backend.message_processor import message_processor
+from src.backend.message_processor import message_processor
 from utils.config import settings
 from utils.logger import setup_logging, get_logger
 

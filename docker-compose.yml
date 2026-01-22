@@ -1,4 +1,5 @@
 
+```yaml
 
 services:
   postgres:
@@ -8,6 +9,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-chatbot}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbot_password}
       POSTGRES_DB: ${POSTGRES_DB:-chatbot_db}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-chatbot}:${POSTGRES_PASSWORD:-chatbot_password}@postgres:5432/${POSTGRES_DB:-chatbot_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +49,7 @@ services:
           cpus: '0.25'
 
   backend:
-    image: ${DOCKER_IMAGE_BACKEND:-ghcr.io/dny1020/bot_whatsapp/backend:${IMAGE_TAG:-latest}}
+    image: ${DOCKER_IMAGE_BACKEND:-ghcr.io/dny1020/bot_whatsapp/backend:${IMAGE_TAG:-main}}
     container_name: chatbot_backend
     pull_policy: always
     ports:
@@ -83,7 +85,7 @@ services:
       - "traefik.http.services.chatbot-backend.loadbalancer.server.port=8000"
 
   webhook:
-    image: ${DOCKER_IMAGE_WEBHOOK:-ghcr.io/dny1020/bot_whatsapp/webhook:${IMAGE_TAG:-latest}}
+    image: ${DOCKER_IMAGE_WEBHOOK:-ghcr.io/dny1020/bot_whatsapp/webhook:${IMAGE_TAG:-main}}
     container_name: chatbot_webhook
     pull_policy: always
     ports:
