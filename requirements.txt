@@ -28,14 +28,3 @@ passlib[bcrypt]==1.7.4
 prometheus-client==0.19.0
 structlog==24.1.0
 
-# Optional: Document processing (only if needed)
-# PyPDF2==3.0.1
-
-# ===================================
-# SOLO SI NECESITAS MODELOS LOCALES:
-# Descomentar estas líneas
-# ===================================
-# transformers==4.36.2
-# torch==2.1.2
-# sentencepiece==0.1.99
-# spacy==3.7.2

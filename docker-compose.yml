@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   postgres:
@@ -47,8 +47,9 @@ services:
           cpus: '0.25'
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY:-dny/bot_whatsapp}/backend:latest
+    image: ${DOCKER_IMAGE_BACKEND:-ghcr.io/dny1020/bot_whatsapp_backend:${IMAGE_TAG:-latest}}
     container_name: chatbot_backend
+    pull_policy: always
     ports:
       - "8000:8000"
     env_file:
@@ -75,15 +76,16 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_net"
-      - "traefik.http.routers.chatbot-backend.rule=Host(`${DOMAIN:-bot.example.com}`)"
+      - "traefik.http.routers.chatbot-backend.rule=Host(`${DOMAIN:-bot.danilocloud.me}`)"
       - "traefik.http.routers.chatbot-backend.entrypoints=websecure"
       - "traefik.http.routers.chatbot-backend.tls=true"
-      - "traefik.http.routers.chatbot-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.chatbot-backend.tls.certresolver=myresolver"
       - "traefik.http.services.chatbot-backend.loadbalancer.server.port=8000"
 
   webhook:
-    image: ghcr.io/${GITHUB_REPOSITORY:-dny/bot_whatsapp}/webhook:latest
+    image: ${DOCKER_IMAGE_WEBHOOK:-ghcr.io/dny1020/bot_whatsapp_webhook:${IMAGE_TAG:-latest}}
     container_name: chatbot_webhook
+    pull_policy: always
     ports:
       - "8001:8001"
     env_file:
@@ -108,10 +110,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_net"
-      - "traefik.http.routers.chatbot-webhook.rule=Host(`${DOMAIN:-bot.example.com}`) && PathPrefix(`/webhook`)"
+      - "traefik.http.routers.chatbot-webhook.rule=Host(`${DOMAIN:-bot.danilocloud.me}`) && PathPrefix(`/webhook`)"
       - "traefik.http.routers.chatbot-webhook.entrypoints=websecure"
       - "traefik.http.routers.chatbot-webhook.tls=true"
-      - "traefik.http.routers.chatbot-webhook.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.chatbot-webhook.tls.certresolver=myresolver"
       - "traefik.http.routers.chatbot-webhook.priority=100"
       - "traefik.http.services.chatbot-webhook.loadbalancer.server.port=8001"
 
