@@ -1,6 +1,4 @@
 
-```yaml
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -24,7 +22,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 128M
           cpus: '0.25'
 
   redis:
@@ -45,7 +43,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 128M
           cpus: '0.25'
 
   backend:
@@ -53,7 +51,7 @@ services:
     container_name: chatbot_backend
     pull_policy: always
     ports:
-      - "8000:8000"
+      - "9000:9000"
     env_file:
       - .env
     environment:
@@ -73,8 +71,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: '0.5'
+          memory: 128M
+          cpus: '0.25'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_net"
@@ -107,8 +105,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: '0.5'
+          memory: 128M
+          cpus: '0.25'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_net"
