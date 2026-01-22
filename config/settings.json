@@ -6,42 +6,6 @@
     "email": "soporte@ispproveedor.com",
     "address": "Av. Tecnología 456"
   },
-  "delivery": {
-    "zones": [],
-    "working_hours": {
-      "monday": {
-        "open": "08:00",
-        "close": "22:00"
-      },
-      "tuesday": {
-        "open": "08:00",
-        "close": "22:00"
-      },
-      "wednesday": {
-        "open": "08:00",
-        "close": "22:00"
-      },
-      "thursday": {
-        "open": "08:00",
-        "close": "22:00"
-      },
-      "friday": {
-        "open": "08:00",
-        "close": "22:00"
-      },
-      "saturday": {
-        "open": "09:00",
-        "close": "20:00"
-      },
-      "sunday": {
-        "open": "09:00",
-        "close": "18:00"
-      }
-    }
-  },
-  "menu": {
-    "categories": []
-  },
   "payment_methods": [
     {
       "id": "card",

@@ -10,7 +10,7 @@ import sys
 sys.path.append('/home/debian/project/src')
 
 from backend.database import get_db, init_db
-from backend.models import User, Order, Product
+from backend.models import User
 from backend.routes import router
 from utils.config import settings, business_config
 from utils.logger import setup_logging, get_logger
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="WhatsApp Chatbot Backend",
-    description="Backend API for WhatsApp Delivery Chatbot",
+    description="Backend API for WhatsApp Support ISP Chatbot",
     version="1.0.0"
 )
 
@@ -51,59 +51,10 @@ async def startup_event():
         init_db()
         logger.info("database_initialized")
         
-        # Load and sync menu items
-        await sync_menu_items()
-        
         logger.info("application_ready")
     except Exception as e:
         logger.error("startup_error", error=str(e))
         raise
-
-
-async def sync_menu_items():
-    """Sync menu items from config to database"""
-    try:
-        from backend.database import get_db_context
-        
-        menu = business_config.get("menu", {})
-        categories = menu.get("categories", [])
-        
-        with get_db_context() as db:
-            for category in categories:
-                category_name = category.get("name")
-                
-                for item in category.get("items", []):
-                    product_id = item.get("id")
-                    
-                    # Check if product exists
-                    existing = db.query(Product).filter(
-                        Product.product_id == product_id
-                    ).first()
-                    
-                    if existing:
-                        # Update
-                        existing.name = item.get("name")
-                        existing.description = item.get("description")
-                        existing.price = item.get("price")
-                        existing.available = item.get("available", True)
-                        existing.category = category_name
-                    else:
-                        # Create
-                        product = Product(
-                            product_id=product_id,
-                            category=category_name,
-                            name=item.get("name"),
-                            description=item.get("description"),
-                            price=item.get("price"),
-                            available=item.get("available", True)
-                        )
-                        db.add(product)
-            
-            db.commit()
-            logger.info("menu_items_synced")
-            
-    except Exception as e:
-        logger.error("menu_sync_error", error=str(e))
 
 
 @app.get("/")

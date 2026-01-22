@@ -1,5 +1,5 @@
 """
-API Routes
+API Routes - ISP Support Chatbot
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 from .database import get_db
-from .models import User, Order, Product, Message
+from .models import User, SupportTicket, Message
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -17,12 +17,14 @@ router = APIRouter()
 
 
 # Pydantic models
-class OrderResponse(BaseModel):
-    order_id: str
+class SupportTicketResponse(BaseModel):
+    ticket_id: str
+    issue_type: str
     status: str
-    total: float
+    priority: str
+    subject: Optional[str]
     created_at: datetime
-    delivery_address: Optional[str]
+    resolved_at: Optional[datetime]
     
     class Config:
         from_attributes = True
@@ -38,102 +40,107 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
-class ProductResponse(BaseModel):
-    product_id: str
-    name: str
-    description: Optional[str]
-    price: float
-    category: str
-    available: bool
-    
-    class Config:
-        from_attributes = True
+class TicketStats(BaseModel):
+    total_tickets: int
+    open_tickets: int
+    in_progress_tickets: int
+    resolved_tickets: int
+    avg_resolution_time_hours: float
 
 
-class OrderStats(BaseModel):
-    total_orders: int
-    pending_orders: int
-    confirmed_orders: int
-    delivered_orders: int
-    total_revenue: float
-
-
-# Orders endpoints
-@router.get("/orders", response_model=List[OrderResponse])
-async def list_orders(
+# Support Tickets endpoints
+@router.get("/tickets", response_model=List[SupportTicketResponse])
+async def list_tickets(
     status: Optional[str] = None,
+    issue_type: Optional[str] = None,
     limit: int = Query(50, le=100),
     db: Session = Depends(get_db)
 ):
-    """List orders with optional status filter"""
-    query = db.query(Order)
+    """List support tickets with optional filters"""
+    query = db.query(SupportTicket)
     
     if status:
-        query = query.filter(Order.status == status)
+        query = query.filter(SupportTicket.status == status)
     
-    orders = query.order_by(desc(Order.created_at)).limit(limit).all()
-    return orders
-
-
-@router.get("/orders/{order_id}", response_model=OrderResponse)
-async def get_order(order_id: str, db: Session = Depends(get_db)):
-    """Get specific order by ID"""
-    order = db.query(Order).filter(Order.order_id == order_id).first()
+    if issue_type:
+        query = query.filter(SupportTicket.issue_type == issue_type)
     
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+    tickets = query.order_by(desc(SupportTicket.created_at)).limit(limit).all()
+    return tickets
+
+
+@router.get("/tickets/{ticket_id}", response_model=SupportTicketResponse)
+async def get_ticket(ticket_id: str, db: Session = Depends(get_db)):
+    """Get specific support ticket by ID"""
+    ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == ticket_id).first()
     
-    return order
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    return ticket
 
 
-@router.patch("/orders/{order_id}/status")
-async def update_order_status(
-    order_id: str,
+@router.patch("/tickets/{ticket_id}/status")
+async def update_ticket_status(
+    ticket_id: str,
     status: str,
+    resolution: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    """Update order status"""
-    valid_statuses = ["pending", "confirmed", "preparing", "delivering", "delivered", "cancelled"]
+    """Update support ticket status"""
+    valid_statuses = ["open", "in_progress", "resolved", "closed"]
     
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
-    order = db.query(Order).filter(Order.order_id == order_id).first()
+    ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == ticket_id).first()
     
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
     
-    order.status = status
+    ticket.status = status
     
-    if status == "delivered":
-        order.delivered_at = datetime.utcnow()
+    if status == "resolved" and resolution:
+        ticket.resolution = resolution
+        ticket.resolved_at = datetime.utcnow()
     
     db.commit()
-    db.refresh(order)
+    db.refresh(ticket)
     
-    logger.info("order_status_updated", order_id=order_id, new_status=status)
+    logger.info("ticket_status_updated", ticket_id=ticket_id, new_status=status)
     
-    return {"order_id": order_id, "status": status, "updated_at": datetime.utcnow()}
+    return {"ticket_id": ticket_id, "status": status, "updated_at": datetime.utcnow()}
 
 
-@router.get("/orders/stats/summary", response_model=OrderStats)
-async def get_order_stats(db: Session = Depends(get_db)):
-    """Get order statistics"""
-    total_orders = db.query(Order).count()
-    pending_orders = db.query(Order).filter(Order.status == "pending").count()
-    confirmed_orders = db.query(Order).filter(Order.status.in_(["confirmed", "preparing", "delivering"])).count()
-    delivered_orders = db.query(Order).filter(Order.status == "delivered").count()
+@router.get("/tickets/stats/summary", response_model=TicketStats)
+async def get_ticket_stats(db: Session = Depends(get_db)):
+    """Get support ticket statistics"""
+    from datetime import timedelta
     
-    total_revenue = db.query(Order).filter(Order.status == "delivered").with_entities(
-        db.func.sum(Order.total)
-    ).scalar() or 0.0
+    total_tickets = db.query(SupportTicket).count()
+    open_tickets = db.query(SupportTicket).filter(SupportTicket.status == "open").count()
+    in_progress_tickets = db.query(SupportTicket).filter(SupportTicket.status == "in_progress").count()
+    resolved_tickets = db.query(SupportTicket).filter(SupportTicket.status.in_(["resolved", "closed"])).count()
     
-    return OrderStats(
-        total_orders=total_orders,
-        pending_orders=pending_orders,
-        confirmed_orders=confirmed_orders,
-        delivered_orders=delivered_orders,
-        total_revenue=total_revenue
+    # Calculate average resolution time
+    resolved_with_time = db.query(SupportTicket).filter(
+        SupportTicket.resolved_at.isnot(None)
+    ).all()
+    
+    avg_hours = 0.0
+    if resolved_with_time:
+        total_hours = sum([
+            (ticket.resolved_at - ticket.created_at).total_seconds() / 3600
+            for ticket in resolved_with_time
+        ])
+        avg_hours = total_hours / len(resolved_with_time)
+    
+    return TicketStats(
+        total_tickets=total_tickets,
+        open_tickets=open_tickets,
+        in_progress_tickets=in_progress_tickets,
+        resolved_tickets=resolved_tickets,
+        avg_resolution_time_hours=round(avg_hours, 2)
     )
 
 
@@ -148,57 +155,16 @@ async def list_users(
     return users
 
 
-@router.get("/users/{phone}/orders", response_model=List[OrderResponse])
-async def get_user_orders(phone: str, db: Session = Depends(get_db)):
-    """Get orders for specific user"""
+@router.get("/users/{phone}/tickets", response_model=List[SupportTicketResponse])
+async def get_user_tickets(phone: str, db: Session = Depends(get_db)):
+    """Get support tickets for specific user"""
     user = db.query(User).filter(User.phone == phone).first()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    orders = db.query(Order).filter(Order.user_id == user.id).order_by(desc(Order.created_at)).all()
-    return orders
-
-
-# Products endpoints
-@router.get("/products", response_model=List[ProductResponse])
-async def list_products(
-    category: Optional[str] = None,
-    available: Optional[bool] = None,
-    db: Session = Depends(get_db)
-):
-    """List products/menu items"""
-    query = db.query(Product)
-    
-    if category:
-        query = query.filter(Product.category == category)
-    
-    if available is not None:
-        query = query.filter(Product.available == available)
-    
-    products = query.all()
-    return products
-
-
-@router.patch("/products/{product_id}/availability")
-async def update_product_availability(
-    product_id: str,
-    available: bool,
-    db: Session = Depends(get_db)
-):
-    """Update product availability"""
-    product = db.query(Product).filter(Product.product_id == product_id).first()
-    
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    
-    product.available = available
-    db.commit()
-    db.refresh(product)
-    
-    logger.info("product_availability_updated", product_id=product_id, available=available)
-    
-    return {"product_id": product_id, "available": available}
+    tickets = db.query(SupportTicket).filter(SupportTicket.user_id == user.id).order_by(desc(SupportTicket.created_at)).all()
+    return tickets
 
 
 # Analytics endpoint

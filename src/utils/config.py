@@ -61,10 +61,7 @@ class Settings(BaseSettings):
     enable_sentiment_analysis: bool = Field(default=True, alias="ENABLE_SENTIMENT_ANALYSIS")
     enable_llm_fallback: bool = Field(default=False, alias="ENABLE_LLM_FALLBACK")
     
-    # Delivery Configuration
-    delivery_radius_km: float = Field(default=10.0, alias="DELIVERY_RADIUS_KM")
-    max_delivery_time_minutes: int = Field(default=60, alias="MAX_DELIVERY_TIME_MINUTES")
-    delivery_fee_base: float = Field(default=5.0, alias="DELIVERY_FEE_BASE")
+    # Delivery Configuration - REMOVED (ISP Support Mode)
     
     # Security
     allowed_origins: str = Field(default="*", alias="ALLOWED_ORIGINS")
@@ -75,9 +72,6 @@ class Settings(BaseSettings):
     enable_voice_messages: bool = Field(default=False, alias="ENABLE_VOICE_MESSAGES")
     enable_image_processing: bool = Field(default=False, alias="ENABLE_IMAGE_PROCESSING")
     enable_location_tracking: bool = Field(default=False, alias="ENABLE_LOCATION_TRACKING")
-    
-    # Demo/Mock Mode
-    enable_mock_whatsapp: bool = Field(default=False, alias="ENABLE_MOCK_WHATSAPP")
     
     class Config:
         env_file = ".env"

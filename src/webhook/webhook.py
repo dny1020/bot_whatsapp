@@ -56,63 +56,37 @@ async def webhook_handler(request: Request):
         body = await request.json()
         logger.debug("webhook_received", body=body)
         
-        # Process webhook payload
+        # 1. Process Meta (Cloud API) payload
         entry = body.get("entry", [])
-        
         for item in entry:
             changes = item.get("changes", [])
-            
             for change in changes:
                 value = change.get("value", {})
                 
-                # Process messages
+                # Filter out everything that is not a message
+                if "messages" not in value:
+                    continue
+                    
                 messages = value.get("messages", [])
-                
                 for message in messages:
                     message_type = message.get("type")
                     from_phone = message.get("from")
                     message_id = message.get("id")
                     
-                    logger.info(
-                        "message_received",
-                        from_phone=from_phone,
-                        message_type=message_type,
-                        message_id=message_id
-                    )
+                    logger.info("message_received", from_phone=from_phone, message_type=message_type)
                     
-                    # Handle text messages
                     if message_type == "text":
                         text_content = message.get("text", {}).get("body", "")
                         await message_processor.process_message(from_phone, text_content, message_id)
                     
-                    # Handle interactive responses (button/list replies)
                     elif message_type == "interactive":
                         interactive = message.get("interactive", {})
-                        
                         if interactive.get("type") == "button_reply":
                             button_id = interactive.get("button_reply", {}).get("id", "")
-                            # Map button IDs to commands
-                            button_commands = {
-                                "btn_menu": "menu",
-                                "btn_order": "pedido",
-                                "btn_help": "ayuda"
-                            }
-                            command_text = button_commands.get(button_id, button_id)
-                            await message_processor.process_message(from_phone, command_text, message_id)
-                        
+                            await message_processor.process_message(from_phone, button_id, message_id)
                         elif interactive.get("type") == "list_reply":
                             list_id = interactive.get("list_reply", {}).get("id", "")
                             await message_processor.process_message(from_phone, list_id, message_id)
-                    
-                    # Handle other message types
-                    else:
-                        logger.info("unsupported_message_type", message_type=message_type)
-                        # Could handle images, documents, location, etc. here
-                
-                # Process status updates
-                statuses = value.get("statuses", [])
-                for status_update in statuses:
-                    logger.debug("status_update", status=status_update)
         
         return {"status": "ok"}
         

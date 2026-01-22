@@ -30,17 +30,53 @@ def is_business_open(now: Optional[datetime] = None) -> bool:
         now = datetime.now()
     
     day_name = now.strftime("%A").lower()
-    working_hours = business_config.get("delivery", {}).get("working_hours", {})
+    # Fallback to default hours if config is missing
+    working_hours = business_config.get("working_hours", {
+        "monday": {"open": "08:00", "close": "18:00"},
+        "tuesday": {"open": "08:00", "close": "18:00"},
+        "wednesday": {"open": "08:00", "close": "18:00"},
+        "thursday": {"open": "08:00", "close": "18:00"},
+        "friday": {"open": "08:00", "close": "18:00"},
+        "saturday": {"open": "09:00", "close": "13:00"},
+        "sunday": {"open": "09:00", "close": "13:00"}
+    })
     
     if day_name not in working_hours:
         return False
     
     hours = working_hours[day_name]
-    open_time = datetime.strptime(hours["open"], "%H:%M").time()
-    close_time = datetime.strptime(hours["close"], "%H:%M").time()
-    current_time = now.time()
+    try:
+        open_time = datetime.strptime(hours["open"], "%H:%M").time()
+        close_time = datetime.strptime(hours["close"], "%H:%M").time()
+        current_time = now.time()
+        return open_time <= current_time <= close_time
+    except Exception:
+        return True  # Default to open on error
+
+def get_business_hours_message() -> str:
+    """Get formatted business hours message"""
+    working_hours = business_config.get("working_hours", {})
     
-    return open_time <= current_time <= close_time
+    if not working_hours:
+        return "Lunes a Viernes de 8:00 AM a 6:00 PM."
+    
+    days_map = {
+        "monday": "Lunes", "tuesday": "Martes", "wednesday": "Miércoles",
+        "thursday": "Jueves", "friday": "Viernes", "saturday": "Sábado", "sunday": "Domingo"
+    }
+    
+    message = "📅 *Horarios de Atención:*\n\n"
+    for day, hours in working_hours.items():
+        day_es = days_map.get(day, day.capitalize())
+        message += f"{day_es}: {hours['open']} - {hours['close']}\n"
+    
+    return message
+
+def sanitize_input(text: str) -> str:
+    """Sanitize user input"""
+    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r'[<>{}]', '', text)
+    return text
 
 
 def get_business_hours_message() -> str:

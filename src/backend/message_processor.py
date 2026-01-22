@@ -10,7 +10,7 @@ from .support_service import support_service
 from ..utils.helpers import (
     normalize_phone, sanitize_input
 )
-from ..utils.config import business_config
+from ..utils.config import business_config, settings
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -99,9 +99,9 @@ class MessageProcessor:
         welcome += "¿Qué te gustaría hacer hoy?"
         
         buttons = [
-            {"id": "btn_menu", "title": "🍔 Ver Menú"},
-            {"id": "btn_order", "title": "🛒 Hacer Pedido"},
-            {"id": "btn_help", "title": "ℹ️ Ayuda"}
+            {"id": "soporte", "title": "🔧 Soporte Técnico"},
+            {"id": "planes", "title": "📡 Ver Planes"},
+            {"id": "factura", "title": "💳 Facturación"}
         ]
         
         try:
@@ -263,7 +263,7 @@ class MessageProcessor:
                     direction=direction,
                     message_type=message_type,
                     content=content,
-                    metadata={"external_id": external_id} if external_id else {}
+                    meta_data={"external_id": external_id} if external_id else {}
                 )
                 
                 db.add(message)
