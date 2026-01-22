@@ -47,7 +47,7 @@ services:
           cpus: '0.25'
 
   backend:
-    image: ${DOCKER_IMAGE_BACKEND:-ghcr.io/dny1020/bot_whatsapp_backend:${IMAGE_TAG:-latest}}
+    image: ${DOCKER_IMAGE_BACKEND:-ghcr.io/dny1020/bot_whatsapp/backend:${IMAGE_TAG:-latest}}
     container_name: chatbot_backend
     pull_policy: always
     ports:
@@ -83,7 +83,7 @@ services:
       - "traefik.http.services.chatbot-backend.loadbalancer.server.port=8000"
 
   webhook:
-    image: ${DOCKER_IMAGE_WEBHOOK:-ghcr.io/dny1020/bot_whatsapp_webhook:${IMAGE_TAG:-latest}}
+    image: ${DOCKER_IMAGE_WEBHOOK:-ghcr.io/dny1020/bot_whatsapp/webhook:${IMAGE_TAG:-latest}}
     container_name: chatbot_webhook
     pull_policy: always
     ports:

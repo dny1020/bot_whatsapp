@@ -22,10 +22,13 @@ cp .env.example .env
 
 ### 3. Despliegue
 ```bash
-# Iniciar contenedores
+# 1. Autenticar con GHCR (necesario para descargar las imágenes)
+echo $GH_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin
+
+# 2. Iniciar contenedores
 docker-compose up -d
 
-# Inicializar base de datos
+# 3. Inicializar base de datos
 docker-compose exec backend python init_db.py
 ```
 
