@@ -50,3 +50,5 @@ docker-compose.override.yml
 
 # Old docs
 README.old.md
+
+output_server.txt

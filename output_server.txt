@@ -1,0 +1,104 @@
+docker compose logs -f app
+chatbot_app  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+chatbot_app  | INFO:     Started parent process [1]
+chatbot_app  | 2026-01-31 01:40:36 [error    ] rag_service_init_error         error=The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+chatbot_app  | 2026-01-31 01:40:36 [error    ] rag_service_init_error         error=The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+chatbot_app  | 2026-01-31 01:40:36 [info     ] nlp_service_initialized
+chatbot_app  | 2026-01-31 01:40:36 [info     ] nlp_service_initialized
+chatbot_app  | INFO:     Started server process [8]
+chatbot_app  | INFO:     Waiting for application startup.
+chatbot_app  | {"env": "production", "version": "1.0.0", "event": "application_starting", "level": "info", "timestamp": "2026-01-31T01:40:36.034656Z"}
+chatbot_app  | INFO:     Started server process [9]
+chatbot_app  | INFO:     Waiting for application startup.
+chatbot_app  | {"env": "production", "version": "1.0.0", "event": "application_starting", "level": "info", "timestamp": "2026-01-31T01:40:36.103613Z"}
+chatbot_app  | {"event": "database_initialized", "level": "info", "timestamp": "2026-01-31T01:40:36.467276Z"}
+chatbot_app  | {"event": "database_initialized", "level": "info", "timestamp": "2026-01-31T01:40:36.467363Z"}
+chatbot_app  | {"service": "unified", "event": "application_ready", "level": "info", "timestamp": "2026-01-31T01:40:36.467405Z"}
+chatbot_app  | INFO:     Application startup complete.
+chatbot_app  | {"error": "(psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint \"pg_type_typname_nsp_index\"\nDETAIL:  Key (typname, typnamespace)=(conversationstatus, 2200) already exists.\n\n[SQL: CREATE TYPE conversationstatus AS ENUM ('ACTIVE', 'IDLE', 'CLOSED', 'ARCHIVED')]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)", "event": "database_init_error", "level": "error", "timestamp": "2026-01-31T01:40:36.470264Z"}
+chatbot_app  | {"error": "(psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint \"pg_type_typname_nsp_index\"\nDETAIL:  Key (typname, typnamespace)=(conversationstatus, 2200) already exists.\n\n[SQL: CREATE TYPE conversationstatus AS ENUM ('ACTIVE', 'IDLE', 'CLOSED', 'ARCHIVED')]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)", "event": "startup_error", "level": "error", "timestamp": "2026-01-31T01:40:36.470348Z"}
+chatbot_app  | ERROR:    Traceback (most recent call last):
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+chatbot_app  |     self.dialect.do_execute(
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+chatbot_app  |     cursor.execute(statement, parameters)
+chatbot_app  | psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+chatbot_app  | DETAIL:  Key (typname, typnamespace)=(conversationstatus, 2200) already exists.
+chatbot_app  |
+chatbot_app  |
+chatbot_app  | The above exception was the direct cause of the following exception:
+chatbot_app  |
+chatbot_app  | Traceback (most recent call last):
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 734, in lifespan
+chatbot_app  |     async with self.lifespan_context(app) as maybe_state:
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 610, in __aenter__
+chatbot_app  |     await self._router.startup()
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 711, in startup
+chatbot_app  |     await handler()
+chatbot_app  |   File "/app/app.py", line 60, in startup_event
+chatbot_app  |     init_db()
+chatbot_app  |   File "/app/src/backend/database.py", line 54, in init_db
+chatbot_app  |     Base.metadata.create_all(bind=engine)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py", line 5832, in create_all
+chatbot_app  |     bind._run_ddl_visitor(
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 3244, in _run_ddl_visitor
+chatbot_app  |     conn._run_ddl_visitor(visitorcallable, element, **kwargs)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2448, in _run_ddl_visitor
+chatbot_app  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py", line 671, in traverse_single
+chatbot_app  |     return meth(obj, **kw)
+chatbot_app  |            ^^^^^^^^^^^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/ddl.py", line 909, in visit_metadata
+chatbot_app  |     with self.with_ddl_events(
+chatbot_app  |   File "/usr/local/lib/python3.11/contextlib.py", line 137, in __enter__
+chatbot_app  |     return next(self.gen)
+chatbot_app  |            ^^^^^^^^^^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/ddl.py", line 823, in with_ddl_events
+chatbot_app  |     target.dispatch.before_create(
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/event/attr.py", line 499, in __call__
+chatbot_app  |     fn(*args, **kw)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 853, in __call__
+chatbot_app  |     return getattr(self.target, self.name)(*arg, **kw)
+chatbot_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1174, in _on_metadata_create
+chatbot_app  |     t._on_metadata_create(target, bind, **kw)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 110, in _on_metadata_create
+chatbot_app  |     self.create(bind=bind, checkfirst=checkfirst)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 339, in create
+chatbot_app  |     super().create(bind, checkfirst=checkfirst)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 51, in create
+chatbot_app  |     bind._run_ddl_visitor(self.DDLGenerator, self, checkfirst=checkfirst)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2448, in _run_ddl_visitor
+chatbot_app  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py", line 671, in traverse_single
+chatbot_app  |     return meth(obj, **kw)
+chatbot_app  |            ^^^^^^^^^^^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 153, in visit_enum
+chatbot_app  |     self.connection.execute(CreateEnumType(enum))
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+chatbot_app  |     return meth(
+chatbot_app  |            ^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/ddl.py", line 181, in _execute_on_connection
+chatbot_app  |     return connection._execute_ddl(
+chatbot_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1528, in _execute_ddl
+chatbot_app  |     ret = self._execute_context(
+chatbot_app  |           ^^^^^^^^^^^^^^^^^^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+chatbot_app  |     return self._exec_single_context(
+chatbot_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+chatbot_app  |     self._handle_dbapi_exception(
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2344, in _handle_dbapi_exception
+chatbot_app  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+chatbot_app  |     self.dialect.do_execute(
+chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+chatbot_app  |     cursor.execute(statement, parameters)
+chatbot_app  | sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+chatbot_app  | DETAIL:  Key (typname, typnamespace)=(conversationstatus, 2200) already exists.
+chatbot_app  |
+chatbot_app  | [SQL: CREATE TYPE conversationstatus AS ENUM ('ACTIVE', 'IDLE', 'CLOSED', 'ARCHIVED')]
+chatbot_app  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+chatbot_app  |
+chatbot_app  | ERROR:    Application startup failed. Exiting.

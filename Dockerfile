@@ -18,6 +18,7 @@ COPY config/ /app/config/
 COPY docs/ /app/docs/
 COPY scripts/ /app/scripts/
 COPY app.py /app/
+COPY init_db.py /app/
 
 # Create required directories
 RUN mkdir -p /app/logs /app/data/vector_store

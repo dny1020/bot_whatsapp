@@ -14,13 +14,13 @@ from src.backend.database import engine
 from src.backend.models import Base
 
 def reset_db():
-    print("🗑️  Dropping all tables...")
+    print("  Dropping all tables...")
     Base.metadata.drop_all(bind=engine)
-    print("✅ Tables dropped.")
+    print(" Tables dropped.")
     
-    print("🔨 Creating new tables...")
+    print(" Creating new tables...")
     Base.metadata.create_all(bind=engine)
-    print("✅ Tables created successfully.")
+    print(" Tables created successfully.")
     
     print("\nSchema updated:")
     for table in Base.metadata.sorted_tables:
@@ -30,5 +30,5 @@ if __name__ == "__main__":
     try:
         reset_db()
     except Exception as e:
-        print(f"❌ Error resetting database: {e}")
+        print(f" Error resetting database: {e}")
         sys.exit(1)
