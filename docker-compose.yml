@@ -45,7 +45,7 @@ services:
           cpus: '0.25'
 
   app:
-    image: ${DOCKER_IMAGE:-ghcr.io/dny1020/bot_whatsapp/app:${IMAGE_TAG:-main}}
+    image: ${DOCKER_IMAGE:-ghcr.io/dny1020/bot_whatsapp/backend:${IMAGE_TAG:-main}}
     container_name: chatbot_app
     pull_policy: always
     ports:

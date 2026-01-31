@@ -48,19 +48,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Extract metadata (tags, labels) for Webhook
-        id: meta-webhook
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/webhook
-
-      - name: Build and push Backend image (App)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta-webhook.outputs.tags }}
-          labels: ${{ steps.meta-webhook.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
