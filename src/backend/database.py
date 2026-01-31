@@ -49,10 +49,26 @@ def get_db_context():
 def init_db():
     """Initialize database"""
     from .models import Base
+    from sqlalchemy import text
     
     try:
-        Base.metadata.create_all(bind=engine)
+        # Create ENUM type if not exists (Postgres-specific)
+        # This prevents "duplicate key value violates unique constraint" error
+        # when multiple workers try to create the ENUM simultaneously
+        with engine.connect() as conn:
+            conn.execute(text("""
+                DO $$ BEGIN
+                    CREATE TYPE conversationstatus AS ENUM ('active', 'idle', 'closed', 'archived');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            """))
+            conn.commit()
+        
+        # Create tables (checkfirst=True checks if tables exist)
+        Base.metadata.create_all(bind=engine, checkfirst=True)
         logger.info("database_initialized")
     except Exception as e:
         logger.error("database_init_error", error=str(e))
-        raise
+        # Don't raise - allow app to start even if initialization fails
+

@@ -12,12 +12,10 @@ from pydantic import Field
 class Settings(BaseSettings):
     """Application settings"""
     
-    # WhatsApp Configuration
-    whatsapp_verify_token: str = Field(default="", alias="WHATSAPP_VERIFY_TOKEN")
-    whatsapp_access_token: str = Field(default="", alias="WHATSAPP_ACCESS_TOKEN")
-    whatsapp_phone_id: str = Field(default="", alias="WHATSAPP_PHONE_ID")
-    whatsapp_business_id: str = Field(default="", alias="WHATSAPP_BUSINESS_ID")
-    whatsapp_api_version: str = Field(default="v18.0", alias="WHATSAPP_API_VERSION")
+    # Twilio WhatsApp Configuration
+    twilio_account_sid: str = Field(default="", alias="TWILIO_ACCOUNT_SID")
+    twilio_auth_token: str = Field(default="", alias="TWILIO_AUTH_TOKEN")
+    twilio_phone_number: str = Field(default="", alias="TWILIO_PHONE_NUMBER")
     
     # Application
     env: str = Field(default="development", alias="ENV")

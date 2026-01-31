@@ -1,7 +1,7 @@
 """
-Unified WhatsApp Bot Application
+Unified WhatsApp Bot Application - Twilio Edition
 Single FastAPI service handling webhook, backend, and health checks
-Architecture: Webhook → Idempotency → Session → Intent → State Machine → Response
+Architecture: Twilio Webhook → Idempotency → Session → Intent → State Machine → Response
 """
 from fastapi import FastAPI, Request, Response, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,9 +26,9 @@ logger = get_logger(__name__)
 
 # Create unified FastAPI app
 app = FastAPI(
-    title="WhatsApp Bot - Unified Service",
-    description="Unified API handling webhook, backend, and admin",
-    version="1.0.0"
+    title="WhatsApp Bot - Unified Service (Twilio)",
+    description="Unified API handling webhook, backend, and admin via Twilio",
+    version="2.0.0"
 )
 
 # CORS middleware
@@ -70,11 +70,11 @@ async def startup_event():
 async def root():
     """Root endpoint"""
     return {
-        "service": "whatsapp-bot-unified",
-        "version": "1.0.0",
+        "service": "whatsapp-bot-unified-twilio",
+        "version": "2.0.0",
         "status": "running",
         "endpoints": {
-            "webhook": "/webhook",
+            "webhook_twilio": "/webhook/twilio",
             "health": "/health",
             "admin": "/admin (coming soon)",
             "api": "/api/v1"
@@ -115,85 +115,58 @@ async def health_check():
 # WEBHOOK ENDPOINTS (from webhook.py)
 # ============================================================================
 
-@app.get("/webhook")
-async def webhook_verification(request: Request):
+@app.get("/webhook/twilio")
+async def twilio_webhook_verification(request: Request):
     """
-    Webhook verification endpoint for WhatsApp Cloud API
-    Meta sends a GET request to verify the webhook
+    Webhook verification endpoint for Twilio (optional, not required)
+    Twilio doesn't need verification like Meta does
     """
-    mode = request.query_params.get("hub.mode")
-    token = request.query_params.get("hub.verify_token")
-    challenge = request.query_params.get("hub.challenge")
-    
-    logger.info("webhook_verification_attempt", mode=mode)
-    
-    if mode == "subscribe" and token == settings.whatsapp_verify_token:
-        logger.info("webhook_verified")
-        return Response(content=challenge, media_type="text/plain")
-    
-    logger.warning("webhook_verification_failed", token_match=(token == settings.whatsapp_verify_token))
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Verification failed")
+    logger.info("twilio_webhook_get_received")
+    return {"status": "ok", "message": "Twilio webhook endpoint ready"}
 
 
-@app.post("/webhook")
-async def webhook_handler(request: Request):
+@app.post("/webhook/twilio")
+async def twilio_webhook_handler(request: Request):
     """
-    Handle incoming webhook events from WhatsApp
+    Handle incoming webhook events from Twilio WhatsApp
     Architecture flow:
-    1. Receive webhook from Meta
-    2. Check idempotency (avoid duplicate processing)
-    3. Load session from Redis
-    4. Classify intent with NLP
-    5. Execute state machine (rules-based)
-    6. Optional: Use LLM for response generation
-    7. Send response
-    8. Save session
+    1. Receive webhook from Twilio (Form data)
+    2. Extract From, Body, MessageSid
+    3. Check idempotency (avoid duplicate processing)
+    4. Process message through message_processor
+    5. Return 200 OK
     """
     try:
-        body = await request.json()
-        logger.debug("webhook_received", body=body)
+        # Twilio sends form data, not JSON
+        form_data = await request.form()
         
-        # Process Meta (Cloud API) payload
-        entry = body.get("entry", [])
-        for item in entry:
-            changes = item.get("changes", [])
-            for change in changes:
-                value = change.get("value", {})
-                
-                # Filter out non-message events
-                if "messages" not in value:
-                    continue
-                    
-                messages = value.get("messages", [])
-                for message in messages:
-                    message_type = message.get("type")
-                    from_phone = message.get("from")
-                    message_id = message.get("id")
-                    
-                    logger.info("message_received", from_phone=from_phone, message_type=message_type)
-                    
-                    # Handle text messages
-                    if message_type == "text":
-                        text_content = message.get("text", {}).get("body", "")
-                        await message_processor.process_message(from_phone, text_content, message_id)
-                    
-                    # Handle interactive messages (buttons, lists)
-                    elif message_type == "interactive":
-                        interactive = message.get("interactive", {})
-                        if interactive.get("type") == "button_reply":
-                            button_id = interactive.get("button_reply", {}).get("id", "")
-                            await message_processor.process_message(from_phone, button_id, message_id)
-                        elif interactive.get("type") == "list_reply":
-                            list_id = interactive.get("list_reply", {}).get("id", "")
-                            await message_processor.process_message(from_phone, list_id, message_id)
+        # Extract Twilio fields
+        from_number = form_data.get("From", "")  # whatsapp:+1234567890
+        body = form_data.get("Body", "")
+        message_sid = form_data.get("MessageSid", "")
+        profile_name = form_data.get("ProfileName", "")
         
-        # Always return 200 to avoid WhatsApp retries
-        return {"status": "ok"}
+        # Remove whatsapp: prefix from phone number
+        from_phone = from_number.replace("whatsapp:", "")
+        
+        logger.info("twilio_webhook_received", 
+                   from_phone=from_phone, 
+                   message_sid=message_sid,
+                   profile_name=profile_name)
+        
+        # Process text message
+        if body and from_phone:
+            await message_processor.process_message(from_phone, body, message_sid)
+        else:
+            logger.warning("twilio_webhook_missing_data", from_phone=from_phone, has_body=bool(body))
+        
+        # Twilio expects 200 OK (or TwiML for immediate reply)
+        return Response(content="", status_code=200)
         
     except Exception as e:
-        logger.error("webhook_error", error=str(e))
-        # Return 200 even on error to avoid WhatsApp retrying failed messages
-        return {"status": "error", "message": str(e)}
+        logger.error("twilio_webhook_error", error=str(e))
+        # Return 200 even on error to avoid Twilio retrying
+        return Response(content="", status_code=200)
 
 
 # ============================================================================

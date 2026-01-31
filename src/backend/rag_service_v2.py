@@ -3,6 +3,7 @@ RAG Service - Sprint 1
 Vector-based knowledge retrieval for technical support
 
 Pipeline: Docs → Chunking → Embeddings → FAISS → Retrieval → LLM Response
+Uses HuggingFace sentence-transformers for FREE local embeddings (no API costs)
 """
 import os
 from typing import List, Dict, Any, Optional
@@ -17,7 +18,7 @@ from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader
 )
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
 from ..utils.config import settings
@@ -31,6 +32,7 @@ class RAGService:
     RAG Service for document-based Q&A
     👉 ONLY active in SOPORTE state
     👉 Returns context + LLM generated answer
+    👉 Uses FREE local embeddings (HuggingFace)
     """
     
     def __init__(self):
@@ -38,11 +40,20 @@ class RAGService:
         self.vector_store_path = Path("data/vector_store")
         self.vector_store_path.mkdir(parents=True, exist_ok=True)
         
-        # Initialize embeddings
-        self.embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-small",
-            openai_api_key=settings.openai_api_key
-        )
+        # Initialize HuggingFace embeddings (FREE, local)
+        # Model: all-MiniLM-L6-v2 (384 dims, 22M params, fast)
+        # Alternative: all-mpnet-base-v2 (768 dims, better quality, slower)
+        try:
+            self.embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={'device': 'cpu'},
+                encode_kwargs={'normalize_embeddings': True}
+            )
+            logger.info("embeddings_initialized", model="all-MiniLM-L6-v2")
+        except Exception as e:
+            logger.error("embeddings_init_error", error=str(e))
+            self.embeddings = None
+
         
         # Text splitter (500-800 tokens)
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -53,11 +64,16 @@ class RAGService:
         )
         
         self.vector_store = None
-        self._load_or_create_vector_store()
         
-        logger.info("rag_service_initialized", 
-                   docs_loaded=self._count_documents(),
-                   vector_store_exists=self.vector_store is not None)
+        # Only load vector store if embeddings initialized successfully
+        if self.embeddings:
+            self._load_or_create_vector_store()
+            logger.info("rag_service_initialized", 
+                       docs_loaded=self._count_documents(),
+                       vector_store_exists=self.vector_store is not None)
+        else:
+            logger.warning("rag_service_disabled", reason="embeddings_failed")
+
     
     def _count_documents(self) -> int:
         """Count documents in docs directory"""
