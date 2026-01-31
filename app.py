@@ -88,9 +88,10 @@ async def health_check():
     try:
         # Check database connection
         from src.backend.database import get_db_context
+        from sqlalchemy import text
         
         with get_db_context() as db:
-            db.execute("SELECT 1")
+            db.execute(text("SELECT 1"))
         
         return {
             "status": "healthy",

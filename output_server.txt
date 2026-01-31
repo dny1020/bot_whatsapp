@@ -1,63 +1,4 @@
-docker compose logs -f app
-chatbot_app  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-chatbot_app  | INFO:     Started parent process [1]
-chatbot_app  | 2026-01-31 01:40:36 [error    ] rag_service_init_error         error=The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
-chatbot_app  | 2026-01-31 01:40:36 [error    ] rag_service_init_error         error=The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
-chatbot_app  | 2026-01-31 01:40:36 [info     ] nlp_service_initialized
-chatbot_app  | 2026-01-31 01:40:36 [info     ] nlp_service_initialized
-chatbot_app  | INFO:     Started server process [8]
-chatbot_app  | INFO:     Waiting for application startup.
-chatbot_app  | {"env": "production", "version": "1.0.0", "event": "application_starting", "level": "info", "timestamp": "2026-01-31T01:40:36.034656Z"}
-chatbot_app  | INFO:     Started server process [9]
-chatbot_app  | INFO:     Waiting for application startup.
-chatbot_app  | {"env": "production", "version": "1.0.0", "event": "application_starting", "level": "info", "timestamp": "2026-01-31T01:40:36.103613Z"}
-chatbot_app  | {"event": "database_initialized", "level": "info", "timestamp": "2026-01-31T01:40:36.467276Z"}
-chatbot_app  | {"event": "database_initialized", "level": "info", "timestamp": "2026-01-31T01:40:36.467363Z"}
-chatbot_app  | {"service": "unified", "event": "application_ready", "level": "info", "timestamp": "2026-01-31T01:40:36.467405Z"}
-chatbot_app  | INFO:     Application startup complete.
-chatbot_app  | {"error": "(psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint \"pg_type_typname_nsp_index\"\nDETAIL:  Key (typname, typnamespace)=(conversationstatus, 2200) already exists.\n\n[SQL: CREATE TYPE conversationstatus AS ENUM ('ACTIVE', 'IDLE', 'CLOSED', 'ARCHIVED')]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)", "event": "database_init_error", "level": "error", "timestamp": "2026-01-31T01:40:36.470264Z"}
-chatbot_app  | {"error": "(psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint \"pg_type_typname_nsp_index\"\nDETAIL:  Key (typname, typnamespace)=(conversationstatus, 2200) already exists.\n\n[SQL: CREATE TYPE conversationstatus AS ENUM ('ACTIVE', 'IDLE', 'CLOSED', 'ARCHIVED')]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)", "event": "startup_error", "level": "error", "timestamp": "2026-01-31T01:40:36.470348Z"}
-chatbot_app  | ERROR:    Traceback (most recent call last):
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
-chatbot_app  |     self.dialect.do_execute(
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
-chatbot_app  |     cursor.execute(statement, parameters)
-chatbot_app  | psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "pg_type_typname_nsp_index"
-chatbot_app  | DETAIL:  Key (typname, typnamespace)=(conversationstatus, 2200) already exists.
-chatbot_app  |
-chatbot_app  |
-chatbot_app  | The above exception was the direct cause of the following exception:
-chatbot_app  |
-chatbot_app  | Traceback (most recent call last):
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 734, in lifespan
-chatbot_app  |     async with self.lifespan_context(app) as maybe_state:
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 610, in __aenter__
-chatbot_app  |     await self._router.startup()
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 711, in startup
-chatbot_app  |     await handler()
-chatbot_app  |   File "/app/app.py", line 60, in startup_event
-chatbot_app  |     init_db()
-chatbot_app  |   File "/app/src/backend/database.py", line 54, in init_db
-chatbot_app  |     Base.metadata.create_all(bind=engine)
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py", line 5832, in create_all
-chatbot_app  |     bind._run_ddl_visitor(
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 3244, in _run_ddl_visitor
-chatbot_app  |     conn._run_ddl_visitor(visitorcallable, element, **kwargs)
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2448, in _run_ddl_visitor
-chatbot_app  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py", line 671, in traverse_single
-chatbot_app  |     return meth(obj, **kw)
-chatbot_app  |            ^^^^^^^^^^^^^^^
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/ddl.py", line 909, in visit_metadata
-chatbot_app  |     with self.with_ddl_events(
-chatbot_app  |   File "/usr/local/lib/python3.11/contextlib.py", line 137, in __enter__
-chatbot_app  |     return next(self.gen)
-chatbot_app  |            ^^^^^^^^^^^^^^
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/ddl.py", line 823, in with_ddl_events
-chatbot_app  |     target.dispatch.before_create(
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/event/attr.py", line 499, in __call__
-chatbot_app  |     fn(*args, **kw)
-chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 853, in __call__
+docker compose logs app --tail 50
 chatbot_app  |     return getattr(self.target, self.name)(*arg, **kw)
 chatbot_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 chatbot_app  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1174, in _on_metadata_create
@@ -102,3 +43,24 @@ chatbot_app  | [SQL: CREATE TYPE conversationstatus AS ENUM ('ACTIVE', 'IDLE', '
 chatbot_app  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
 chatbot_app  |
 chatbot_app  | ERROR:    Application startup failed. Exiting.
+chatbot_app  | {"error": "Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')", "event": "database_error", "level": "error", "timestamp": "2026-01-31T01:54:48.812273Z"}
+chatbot_app  | {"error": "Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')", "event": "health_check_failed", "level": "error", "timestamp": "2026-01-31T01:54:48.812616Z"}
+chatbot_app  | INFO:     172.18.0.1:50128 - "GET /health HTTP/1.1" 503 Service Unavailable
+chatbot_app  | {"error": "Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')", "event": "database_error", "level": "error", "timestamp": "2026-01-31T01:55:05.946284Z"}
+chatbot_app  | {"error": "Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')", "event": "health_check_failed", "level": "error", "timestamp": "2026-01-31T01:55:05.946475Z"}
+chatbot_app  | INFO:     172.18.0.1:42958 - "GET /health HTTP/1.1" 503 Service Unavailable
+azureuser@azure:~/bot_whatsapp$ docker compose exec app python init_db.py
+Traceback (most recent call last):
+  File "/app/init_db.py", line 11, in <module>
+    from backend.database import init_db, engine
+  File "/app/src/backend/database.py", line 7, in <module>
+    from ..utils.config import settings
+ImportError: attempted relative import beyond top-level package
+azureuser@azure:~/bot_whatsapp$ docker compose ps
+NAME               IMAGE                                       COMMAND                  SERVICE    CREATED         STATUS                   PORTS
+chatbot_app        ghcr.io/dny1020/bot_whatsapp/backend:main   "python -m uvicorn a…"   app        9 minutes ago   Up 2 minutes             0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+chatbot_postgres   postgres:15-alpine                          "docker-entrypoint.s…"   postgres   9 minutes ago   Up 9 minutes (healthy)   5432/tcp
+chatbot_redis      redis:7-alpine                              "docker-entrypoint.s…"   redis      9 minutes ago   Up 9 minutes (healthy)   6379/tcp
+azureuser@azure:~/bot_whatsapp$ docker compose exec app ps aux
+OCI runtime exec failed: exec failed: unable to start container process: exec: "ps": executable file not found in $PATH
+azureuser@azure:~/bot_whatsapp$
