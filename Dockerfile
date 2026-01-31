@@ -10,13 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements
 COPY requirements.txt .
-
-# Install dependencies optimized for CPU
-# 1. Install torch-cpu specifically (much smaller than standard torch)
-# 2. Install the rest of requirements
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements.txt && \
-    rm -rf /root/.cache/pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src/ /app/src/

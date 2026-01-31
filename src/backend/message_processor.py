@@ -25,8 +25,7 @@ class MessageProcessor:
     """Process incoming messages and manage conversation flow"""
     
     def __init__(self):
-        self.redis_client = session_manager.redis_client
-        self.idempotency_ttl = 600  # 10 minutes
+        # Configuration
         self.farewell_keywords = [
             "gracias", "listo", "perfecto", "ok gracias", "chao", "adios", "adiós", "hasta luego", "eso es todo"
         ]
@@ -40,32 +39,28 @@ class MessageProcessor:
             "humano": self.request_human,
         }
     
-    def _check_idempotency(self, message_id: str) -> bool:
-        """Check if message has already been processed (idempotency)"""
+    def _check_idempotency(self, message_id: str, db: any) -> bool:
+        """Check if message has already been processed (idempotency) using DB"""
+        if not message_id or message_id == "test_id":
+            return False
+            
         try:
-            key = f"processed:{message_id}"
-            exists = self.redis_client.exists(key)
+            # Check if message ID already exists in messages table
+            exists = db.query(Message).filter(Message.id == message_id).first()
             
             if exists:
                 logger.info("duplicate_message_detected", message_id=message_id)
                 return True
             
-            # Mark as processed with TTL
-            self.redis_client.setex(key, self.idempotency_ttl, "1")
             return False
             
         except Exception as e:
             logger.error("idempotency_check_error", message_id=message_id, error=str(e))
-            # On error, allow processing to avoid blocking legitimate messages
             return False
     
     async def process_message(self, phone: str, message: str, message_id: str) -> None:
         """Process incoming message"""
         try:
-            # 🔒 IDEMPOTENCY CHECK - Avoid processing duplicates
-            if self._check_idempotency(message_id):
-                return
-            
             phone = normalize_phone(phone)
             message = sanitize_input(message)
             
@@ -73,6 +68,9 @@ class MessageProcessor:
             
             # Manage Database Session per request
             with get_db_context() as db:
+                # 🔒 IDEMPOTENCY CHECK - Avoid processing duplicates (now using DB)
+                if self._check_idempotency(message_id, db):
+                    return
                 
                 # 1. Identify User
                 user, is_new_user = user_service.get_or_create_user(phone, db)

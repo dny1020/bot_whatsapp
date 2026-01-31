@@ -1,11 +1,10 @@
 """
-Session state management with Redis and Database
+Session state management using Database
 """
 import json
 import uuid
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
-import redis
 from sqlalchemy.orm import Session as DBSession
 
 from ..utils.config import settings
@@ -20,56 +19,30 @@ class SessionManager:
     """Manage user conversations (lifecycle & state)"""
     
     def __init__(self):
-        self.redis_client = redis.from_url(settings.redis_url, decode_responses=True)
-        # Redis caching config
+        # Configuration
         self.active_conv_ttl = 86400  # 24 hours
         self.idle_timeout_seconds = 1800 # 30 mins
     
-    def _get_redis_key(self, phone: str) -> str:
-        """Get Redis key for active conversation ID"""
-        return f"active_conversation:{phone}"
-
     def get_or_create_conversation(self, phone: str, db: DBSession) -> Conversation:
         """
         Get active conversation or create new one.
-        Checks Redis cache first, then DB.
+        Queries the database directly.
         """
-        redis_key = self._get_redis_key(phone)
-        conversation_id = self.redis_client.get(redis_key)
+        # Try to find active conversation in DB
+        conversation = db.query(Conversation).filter(
+            Conversation.phone == phone,
+            Conversation.status.in_([ConversationStatus.ACTIVE, ConversationStatus.IDLE])
+        ).order_by(Conversation.last_activity.desc()).first()
         
-        conversation = None
-        
-        if conversation_id:
-            # Check if exists in DB and is active
-            conversation = db.query(Conversation).filter(
-                Conversation.id == conversation_id,
-                Conversation.status != ConversationStatus.CLOSED,
-                Conversation.status != ConversationStatus.ARCHIVED
-            ).first()
-            
-            if not conversation:
-                # Cache invalid
-                self.redis_client.delete(redis_key)
-        
-        if not conversation:
-            # Try to find active conversation in DB (fallback)
-            conversation = db.query(Conversation).filter(
-                Conversation.phone == phone,
-                Conversation.status.in_([ConversationStatus.ACTIVE, ConversationStatus.IDLE])
-            ).order_by(Conversation.last_activity.desc()).first()
-            
-            # Check if expired by TTL (24h)
-            if conversation:
-                if datetime.utcnow() > conversation.ttl_expires_at:
-                    self.close_conversation(conversation.id, "ttl_expired", db)
-                    conversation = None
+        # Check if conversation expired by TTL (24h)
+        if conversation:
+            if datetime.utcnow() > conversation.ttl_expires_at:
+                self.close_conversation(conversation.id, "ttl_expired", db)
+                conversation = None
         
         if not conversation:
             # Create NEW conversation
             conversation = self._create_new_conversation(phone, db)
-        
-        # Update Redis cache
-        self.redis_client.setex(redis_key, self.active_conv_ttl, conversation.id)
         
         # Update last activity
         conversation.last_activity = datetime.utcnow()
@@ -86,9 +59,7 @@ class SessionManager:
         # Ensure user exists (should be handled by caller, but safety check)
         user = db.query(User).filter(User.phone == phone).first()
         if not user:
-             # Just in case, though message_processor should handle user creation
              logger.warning("creating_conversation_for_unknown_user", phone=phone)
-             # user creation should ideally be in user_service or similar
         
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         unique_suffix = uuid.uuid4().hex[:6]
@@ -96,7 +67,7 @@ class SessionManager:
         
         new_conv = Conversation(
             id=conversation_id,
-            user_id=user.id if user else 0, # Fallback if user logic separates
+            user_id=user.id if user else 0,
             phone=phone,
             status=ConversationStatus.ACTIVE,
             state="idle", # FSM state
@@ -128,9 +99,6 @@ class SessionManager:
             conversation.closed_at = datetime.utcnow()
             conversation.close_reason = reason
             db.commit()
-            
-            # Clear Redis cache
-            self.redis_client.delete(self._get_redis_key(conversation.phone))
             logger.info("conversation_closed", id=conversation_id, reason=reason)
 
     def mark_idle(self, conversation_id: str, db: DBSession):

@@ -99,8 +99,7 @@ async def health_check():
             "environment": settings.env,
             "version": "1.0.0",
             "checks": {
-                "database": "ok",
-                "redis": "ok"
+                "database": "ok"
             }
         }
     except Exception as e:
