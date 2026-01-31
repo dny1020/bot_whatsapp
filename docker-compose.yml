@@ -18,7 +18,6 @@ services:
     networks:
       - chatbot_network
     restart: unless-stopped
-    # OPTIMIZACIÓN: Límite de recursos
     deploy:
       resources:
         limits:
@@ -39,19 +38,18 @@ services:
     networks:
       - chatbot_network
     restart: unless-stopped
-    # OPTIMIZACIÓN: Límite de recursos
     deploy:
       resources:
         limits:
           memory: 128M
           cpus: '0.25'
 
-  backend:
-    image: ${DOCKER_IMAGE_BACKEND:-ghcr.io/dny1020/bot_whatsapp/backend:${IMAGE_TAG:-main}}
-    container_name: chatbot_backend
+  app:
+    image: ${DOCKER_IMAGE:-ghcr.io/dny1020/bot_whatsapp/app:${IMAGE_TAG:-main}}
+    container_name: chatbot_app
     pull_policy: always
     ports:
-      - "9000:9000"
+      - "8000:8000"
     env_file:
       - .env
     environment:
@@ -71,51 +69,17 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
-          cpus: '0.25'
+          memory: 256M
+          cpus: '0.5'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_net"
-      - "traefik.http.routers.chatbot-backend.rule=Host(`${DOMAIN:-bot.danilocloud.me}`)"
-      - "traefik.http.routers.chatbot-backend.entrypoints=websecure"
-      - "traefik.http.routers.chatbot-backend.tls=true"
-      - "traefik.http.routers.chatbot-backend.tls.certresolver=myresolver"
-      - "traefik.http.services.chatbot-backend.loadbalancer.server.port=8000"
-
-  webhook:
-    image: ${DOCKER_IMAGE_WEBHOOK:-ghcr.io/dny1020/bot_whatsapp/webhook:${IMAGE_TAG:-main}}
-    container_name: chatbot_webhook
-    pull_policy: always
-    ports:
-      - "8001:8001"
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./logs:/app/logs
-      - ./config:/app/config:ro
-    restart: unless-stopped
-    networks:
-      - chatbot_network
-      - traefik_net
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.25'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_net"
-      - "traefik.http.routers.chatbot-webhook.rule=Host(`${DOMAIN:-bot.danilocloud.me}`) && PathPrefix(`/webhook`)"
-      - "traefik.http.routers.chatbot-webhook.entrypoints=websecure"
-      - "traefik.http.routers.chatbot-webhook.tls=true"
-      - "traefik.http.routers.chatbot-webhook.tls.certresolver=myresolver"
-      - "traefik.http.routers.chatbot-webhook.priority=100"
-      - "traefik.http.services.chatbot-webhook.loadbalancer.server.port=8001"
+      # Main domain routes to unified app
+      - "traefik.http.routers.chatbot-app.rule=Host(`${DOMAIN:-bot.danilocloud.me}`)"
+      - "traefik.http.routers.chatbot-app.entrypoints=websecure"
+      - "traefik.http.routers.chatbot-app.tls=true"
+      - "traefik.http.routers.chatbot-app.tls.certresolver=myresolver"
+      - "traefik.http.services.chatbot-app.loadbalancer.server.port=8000"
 
 volumes:
   postgres_data:

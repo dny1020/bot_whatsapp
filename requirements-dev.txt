@@ -1,8 +1,5 @@
-# ===================================
-# VERSIÓN OPTIMIZADA - SIN SOBRECARGA LOCAL
-# ===================================
-# Usa APIs externas (OpenAI/Claude/Groq) en lugar de modelos locales
-# Ahorro: ~3GB de espacio, ~80% más rápido
+# Development requirements (lighter, sin PostgreSQL)
+# Usa estos para desarrollo local sin Docker
 
 # Core Web Framework
 fastapi==0.109.2
@@ -12,12 +9,10 @@ pydantic-settings>=2.6.0
 python-dotenv==1.0.0
 httpx==0.26.0
 python-multipart==0.0.9
-psycopg2-binary==2.9.9
 
-# Database
+# Database (Redis solo)
 redis==5.0.1
-sqlalchemy==2.0.25
-alembic==1.13.1
+# psycopg2-binary - NO incluido, usar Docker para tests con DB
 
 # Security
 cryptography==42.0.0
@@ -37,4 +32,3 @@ faiss-cpu==1.9.0.post1
 pypdf==4.0.1
 python-docx==1.1.0
 tiktoken>=0.7
-

@@ -77,6 +77,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = False
         populate_by_name = True
+        extra = 'allow'  # Permitir campos extras del .env
 
 
 # Global settings instance
@@ -93,12 +94,19 @@ def load_business_config() -> Dict[str, Any]:
     
     return {
         "business": {
-            "name": "Mi Negocio",
-            "description": "Servicio de delivery",
+            "name": "ISP Support Bot",
+            "description": "Asistente virtual de tu proveedor de internet",
         },
-        "delivery": {"zones": [], "working_hours": {}},
-        "menu": {"categories": []},
-        "payment_methods": []
+        "support": {
+            "hours": "24/7", 
+            "contact_phone": "+1234567890",
+            "website": "www.tu-isp.com"
+        },
+        "plans": [
+            {"name": "Básico", "speed": "100MB", "price": 20},
+            {"name": "Pro", "speed": "300MB", "price": 35},
+            {"name": "Gamer", "speed": "600MB", "price": 50}
+        ]
     }
 
 

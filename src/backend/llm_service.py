@@ -198,15 +198,14 @@ class LLMService:
     
     async def extract_intent(self, message: str) -> str:
         """Extract user intent from message"""
-        system_prompt = """Eres un clasificador de intenciones para un chatbot de delivery.
+        system_prompt = """Eres un clasificador de intenciones para un chatbot de ISP (Proveedor de Internet).
 Clasifica el mensaje del usuario en una de estas categorías:
 - greeting (saludos)
-- show_menu (ver menú)
-- order (hacer pedido)
-- track_order (rastrear pedido)
-- hours (horarios)
+- support (soporte técnico)
+- plans (planes de internet)
+- billing (facturación/pagos)
+- coverage (cobertura)
 - help (ayuda)
-- cancel (cancelar)
 - other (otro)
 
 Responde SOLO con el nombre de la categoría."""
@@ -221,16 +220,16 @@ Responde SOLO con el nombre de la categoría."""
         return intent.lower().strip()
     
     async def extract_entities(self, message: str) -> Dict[str, Any]:
-        """Extract entities from message (address, phone, name, etc.)"""
+        """Extract entities from message (client_code, phone, issue, etc.)"""
         system_prompt = """Extrae entidades del mensaje del usuario.
 Responde en formato JSON con estas claves (deja vacío si no existe):
-- address: dirección de entrega
+- client_code: código de cliente
 - phone: número de teléfono
-- name: nombre de la persona
-- product: producto mencionado
-- quantity: cantidad
+- issue_type: tipo de problema (lento, corte, etc.)
+- plan_name: nombre del plan
+- address: dirección (para visitas técnicas)
 
-Ejemplo: {"address": "Calle 123", "phone": "", "name": "Juan", "product": "pizza", "quantity": "2"}"""
+Ejemplo: {"client_code": "12345", "phone": "999888777", "issue_type": "internet lento", "plan_name": "", "address": ""}"""
 
         entities_json = await self.generate_response(
             prompt=f"Mensaje: {message}",
@@ -254,12 +253,12 @@ Ejemplo: {"address": "Calle 123", "phone": "", "name": "Juan", "product": "pizza
         intent: str
     ) -> str:
         """Generate a friendly, contextual response"""
-        system_prompt = f"""Eres un asistente amigable de un servicio de delivery.
+        system_prompt = f"""Eres un asistente de soporte técnico de un ISP (Proveedor de Internet).
 Contexto actual: {context}
 Intención del usuario: {intent}
 
-Genera una respuesta natural, breve y útil en español.
-Mantén un tono amigable y profesional."""
+Genera una respuesta profesional, breve y útil en español.
+Mantén un tono empático y orientado a la solución."""
 
         response = await self.generate_response(
             prompt=user_message,

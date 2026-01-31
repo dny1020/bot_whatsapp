@@ -25,11 +25,11 @@ def main():
         Base.metadata.create_all(bind=engine)
         
         logger.info("Database initialized successfully!")
-        print("✅ Database tables created successfully")
+        print(" Database tables created successfully")
         
     except Exception as e:
         logger.error("Database initialization failed", error=str(e))
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         sys.exit(1)
 
 

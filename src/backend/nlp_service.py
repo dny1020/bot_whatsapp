@@ -13,40 +13,41 @@ logger = get_logger(__name__)
 class IntentClassifier:
     """Rule-based intent classifier with keyword matching"""
     
+    # 👉 ALLOWED INTENTS - The AI never decides outside these
+    ALLOWED_INTENTS = {
+        "greeting", "support", "hours", "payment", 
+        "help", "thanks", "farewell", "complaint", 
+        "affirmative", "negative", "plans", "billing"
+    }
+    
     def __init__(self):
         self.intent_patterns = {
             "greeting": [
                 r"\b(hola|buenos días|buenas tardes|buenas noches|hey|hi|hello|saludos)\b",
                 r"\b(qué tal|cómo estás|cómo está)\b"
             ],
-            "show_menu": [
-                r"\b(menú|menu|carta|opciones|productos|qué tienen|que tienen)\b",
-                r"\b(ver.*menú|mostrar.*menú|quiero ver)\b"
+
+            "support": [
+                r"\b(soporte|ayuda técnica|problema técnico|no funciona)\b",
+                r"\b(internet|conexión|router|wifi|velocidad)\b"
             ],
-            "order": [
-                r"\b(pedido|pedir|ordenar|orden|comprar|quiero)\b",
-                r"\b(hacer.*pedido|nueva.*orden)\b"
+            "plans": [
+                r"\b(plan|planes|paquete|paquetes|fibra|megas|mb)\b"
             ],
-            "track_order": [
-                r"\b(estado|rastrear|seguimiento|dónde.*pedido|donde.*pedido)\b",
-                r"\b(mi.*pedido|mi.*orden|número.*orden)\b"
+            "billing": [
+                r"\b(factura|pago|recibo|cuenta|deuda|saldo)\b"
             ],
+
             "hours": [
                 r"\b(horario|hora|abierto|cerrado|atienden|atención)\b",
                 r"\b(qué.*hora|a qué hora|hasta.*hora)\b"
             ],
-            "delivery": [
-                r"\b(delivery|entrega|envío|envio|domicilio|reparto)\b",
-                r"\b(costo.*entrega|precio.*delivery|zona.*entrega)\b"
-            ],
+
             "payment": [
                 r"\b(pago|pagar|efectivo|tarjeta|transferencia)\b",
                 r"\b(método.*pago|forma.*pago|cómo.*pagar|como.*pagar)\b"
             ],
-            "cancel": [
-                r"\b(cancelar|anular|borrar|eliminar|quitar)\b",
-                r"\b(no quiero|ya no|cambié.*mente|cambie.*mente)\b"
-            ],
+
             "help": [
                 r"\b(ayuda|help|soporte|asistencia|información|informacion)\b",
                 r"\b(cómo.*funciona|como.*funciona|necesito.*ayuda)\b"
@@ -70,7 +71,10 @@ class IntentClassifier:
         }
     
     def classify(self, message: str) -> str:
-        """Classify intent from message"""
+        """
+        Classify intent from message
+        👉 ONLY CLASSIFICATION - Never decides flow or actions
+        """
         message_lower = message.lower().strip()
         
         # Check each intent pattern
@@ -80,7 +84,9 @@ class IntentClassifier:
                     logger.info("intent_classified", intent=intent, message=message[:50])
                     return intent
         
-        return "other"
+        # Return "unknown" for unrecognized intents
+        logger.info("intent_unknown", message=message[:50])
+        return "unknown"
     
     def get_confidence_scores(self, message: str) -> Dict[str, float]:
         """Get confidence scores for all intents"""
@@ -108,7 +114,7 @@ class EntityExtractor:
             "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
             "currency": r"\$?\s?\d+(?:[.,]\d{2})?",
             "number": r"\b\d+\b",
-            "order_id": r"\b(?:ORD|ORDER)[-_]?\d+[-_]?[A-Z0-9]+\b"
+            "ticket_id": r"\b(?:TICKET|CASO|REQ)[-_]?\d+[-_]?[A-Z0-9]+\b"
         }
     
     def extract(self, message: str) -> Dict[str, Any]:
@@ -135,10 +141,10 @@ class EntityExtractor:
         if number_matches:
             entities["numbers"] = [int(n) for n in number_matches]
         
-        # Extract order ID
-        order_match = re.search(self.patterns["order_id"], message, re.IGNORECASE)
-        if order_match:
-            entities["order_id"] = order_match.group()
+        # Extract Ticket ID
+        ticket_match = re.search(self.patterns["ticket_id"], message, re.IGNORECASE)
+        if ticket_match:
+            entities["ticket_id"] = ticket_match.group()
         
         # Extract address indicators
         address_keywords = ["calle", "avenida", "av.", "jirón", "jr.", "pasaje", 
@@ -153,23 +159,7 @@ class EntityExtractor:
         logger.debug("entities_extracted", count=len(entities))
         return entities
     
-    def extract_quantity(self, message: str) -> Optional[int]:
-        """Extract quantity from message"""
-        # Look for patterns like "2 pizzas", "quiero 3", etc.
-        patterns = [
-            r"(\d+)\s*(?:unidades?|piezas?|productos?)?",
-            r"(?:quiero|necesito|dame)\s*(\d+)"
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, message.lower())
-            if match:
-                try:
-                    return int(match.group(1))
-                except (ValueError, IndexError):
-                    continue
-        
-        return None
+
 
 
 class SentimentAnalyzer:
@@ -178,12 +168,12 @@ class SentimentAnalyzer:
     def __init__(self):
         self.positive_words = [
             "bueno", "excelente", "genial", "perfecto", "gracias", "feliz",
-            "contento", "me gusta", "increíble", "fantástico", "rico"
+            "contento", "increíble", "fantástico", "rápido"
         ]
         
         self.negative_words = [
             "malo", "terrible", "pésimo", "horrible", "nunca", "problema",
-            "queja", "reclamo", "demora", "tardó", "frío", "frio", "mal"
+            "queja", "reclamo", "demora", "tardó", "lento", "caída", "fallo"
         ]
     
     def analyze(self, message: str) -> Dict[str, Any]:
@@ -212,7 +202,10 @@ class SentimentAnalyzer:
 
 
 class NLPService:
-    """Main NLP service combining all processors"""
+    """
+    Main NLP service - ONLY for classification
+    👉 Never decides flow, never responds without filter, never calls APIs
+    """
     
     def __init__(self):
         self.intent_classifier = IntentClassifier()
@@ -221,14 +214,30 @@ class NLPService:
         
         logger.info("nlp_service_initialized")
     
+    def classify_intent(self, message: str) -> str:
+        """
+        Classify intent ONLY - This is what the bot should use
+        Returns intent string or 'unknown'
+        """
+        intent = self.intent_classifier.classify(message)
+        
+        # Validate against allowed intents
+        if intent not in IntentClassifier.ALLOWED_INTENTS and intent != "unknown":
+            logger.warning("intent_not_allowed", intent=intent)
+            return "unknown"
+        
+        return intent
+    
     def process(self, message: str) -> Dict[str, Any]:
-        """Process message and extract all NLP features"""
+        """
+        Process message and extract all NLP features
+        Use this for analytics/logging, NOT for flow decisions
+        """
         result = {
-            "intent": self.intent_classifier.classify(message),
+            "intent": self.classify_intent(message),
             "intent_scores": self.intent_classifier.get_confidence_scores(message),
             "entities": self.entity_extractor.extract(message),
             "sentiment": self.sentiment_analyzer.analyze(message),
-            "quantity": self.entity_extractor.extract_quantity(message),
             "processed_at": datetime.utcnow().isoformat()
         }
         

@@ -5,7 +5,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
-    libpq-dev \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
@@ -15,15 +15,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src/ /app/src/
 COPY config/ /app/config/
+COPY docs/ /app/docs/
+COPY scripts/ /app/scripts/
+COPY app.py /app/
 
-# Create logs directory
-RUN mkdir -p /app/logs
+# Create required directories
+RUN mkdir -p /app/logs /app/data/vector_store
 
 # Set Python path
 ENV PYTHONPATH=/app
 
-# Expose port
-EXPOSE 8001
+# Expose unified port
+EXPOSE 8000
 
-# Run webhook
-CMD ["python", "-m", "uvicorn", "src.webhook.webhook:app", "--host", "0.0.0.0", "--port", "8001"]
+# Run unified application
+CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

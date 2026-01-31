@@ -1,14 +1,19 @@
 """
 Message processor and bot logic
+Implements clean architecture:
+Webhook → Idempotency → Conversation (DB/Redis) → Intent → State Machine → Response
 """
 from typing import Dict, Any, Optional
 from datetime import datetime
 from .session_manager import session_manager
 from .whatsapp_client import whatsapp_client
-from .database import get_db_context
+from .database import get_db, get_db_context
+from .models import User, Conversation, Message, ConversationStatus
 from .support_service import support_service
+from .user_service import user_service
+from .nlp_service import nlp_service
 from ..utils.helpers import (
-    normalize_phone, sanitize_input
+    normalize_phone, sanitize_input, is_business_open, get_business_hours_message
 )
 from ..utils.config import business_config, settings
 from ..utils.logger import get_logger
@@ -20,6 +25,12 @@ class MessageProcessor:
     """Process incoming messages and manage conversation flow"""
     
     def __init__(self):
+        self.redis_client = session_manager.redis_client
+        self.idempotency_ttl = 600  # 10 minutes
+        self.farewell_keywords = [
+            "gracias", "listo", "perfecto", "ok gracias", "chao", "adios", "adiós", "hasta luego", "eso es todo"
+        ]
+        
         self.commands = {
             "ayuda": self.show_help,
             "help": self.show_help,
@@ -29,74 +40,159 @@ class MessageProcessor:
             "humano": self.request_human,
         }
     
+    def _check_idempotency(self, message_id: str) -> bool:
+        """Check if message has already been processed (idempotency)"""
+        try:
+            key = f"processed:{message_id}"
+            exists = self.redis_client.exists(key)
+            
+            if exists:
+                logger.info("duplicate_message_detected", message_id=message_id)
+                return True
+            
+            # Mark as processed with TTL
+            self.redis_client.setex(key, self.idempotency_ttl, "1")
+            return False
+            
+        except Exception as e:
+            logger.error("idempotency_check_error", message_id=message_id, error=str(e))
+            # On error, allow processing to avoid blocking legitimate messages
+            return False
+    
     async def process_message(self, phone: str, message: str, message_id: str) -> None:
         """Process incoming message"""
         try:
+            # 🔒 IDEMPOTENCY CHECK - Avoid processing duplicates
+            if self._check_idempotency(message_id):
+                return
+            
             phone = normalize_phone(phone)
             message = sanitize_input(message)
             
             logger.info("processing_message", phone=phone, message=message[:50])
             
-            # Get or create user
-            user_created = await self._ensure_user_exists(phone)
-            
-            # Log message
-            await self._log_message(phone, "inbound", "text", message, message_id)
-            
-            # Get session
-            session = session_manager.get_session(phone)
-            if not session:
-                session = session_manager.create_session(phone)
-                # If new user or first message, send welcome menu
-                if user_created or not session.get("has_seen_welcome"):
-                    await self.send_welcome_menu(phone)
-                    session["has_seen_welcome"] = True
-                    session_manager.save_session(phone, session)
+            # Manage Database Session per request
+            with get_db_context() as db:
+                
+                # 1. Identify User
+                user, is_new_user = user_service.get_or_create_user(phone, db)
+                
+                # 2. Get or Create Conversation
+                conversation = session_manager.get_or_create_conversation(phone, db)
+                
+                # 3. Log Message (Inbound)
+                self._log_message(conversation, "user", message, message_id, db)
+                
+                # 4. Check for Conversation Closure
+                if self._check_closure(message, conversation, db):
+                    await whatsapp_client.send_text_message(
+                        phone,
+                        "¡Gracias por contactarnos! Tu sesión ha sido cerrada. Si necesitas más ayuda, solo escribe nuevamente. 👋"
+                    )
                     return
-            
-            # Mark as read
-            await whatsapp_client.mark_as_read(message_id)
-            
-            # Check for commands
-            message_lower = message.lower().strip()
-            
-            if message_lower in self.commands:
-                await self.commands[message_lower](phone)
-                return
-            
-            # Process based on current state
-            state = session.get("state", "idle")
-            
-            if state == "idle":
-                await self.handle_idle_state(phone, message)
-            elif state == "technical_support":
-                await self.handle_support_query(phone, message)
-            else:
-                await self.handle_idle_state(phone, message)
+
+                # Mark as read
+                await whatsapp_client.mark_as_read(message_id)
+                
+                # 5. Handle New User / Welcome logic
+                if is_new_user or conversation.message_count <= 1:
+                     # Only send welcome if it's the very first message in a new conversation and intent isn't specific
+                     # Or logic: if new user, definitely welcome.
+                     if is_new_user:
+                         await self.send_welcome_menu(phone)
+                         # Don't return, allow processing intent? No, usually welcome breaks flow.
+                         # But let's check intent first.
+                         pass 
+                
+                # 6. Intent Classification
+                intent = nlp_service.classify_intent(message)
+                logger.info("intent_detected", phone=phone, intent=intent)
+                
+                # Update Activity
+                conversation.last_activity = datetime.utcnow()
+                conversation.message_count += 1
+                db.commit()
+
+                # 7. Check Direct Commands
+                message_lower = message.lower().strip()
+                if message_lower in self.commands:
+                    await self.commands[message_lower](phone)
+                    return
+                
+                # 8. State Machine Logic (using Conversation state)
+                state = conversation.state
+                
+                if state == "idle":
+                    if intent == "support":
+                        await self.start_support(phone)
+                    elif intent == "plans":
+                        await self.show_plans(phone)
+                    elif intent == "billing":
+                        await self.show_billing_info(phone)
+                    elif intent == "greeting":
+                        await self.send_welcome_menu(phone)
+                    elif intent == "help":
+                        await self.show_help(phone)
+                    else:
+                        await self.handle_idle_state(phone, message)
+                        
+                elif state == "technical_support":
+                    await self.handle_support_query_v2(phone, message, conversation, db)
+                else:
+                    await self.handle_idle_state(phone, message)
                 
         except Exception as e:
             logger.error("message_processing_error", phone=phone, error=str(e))
-            await whatsapp_client.send_text_message(
-                phone,
-                "Lo siento, hubo un error procesando tu mensaje. Por favor intenta de nuevo."
+            try:
+                await whatsapp_client.send_text_message(
+                    phone,
+                    "Lo siento, hubo un error técnico. Por favor intenta de nuevo en unos minutos."
+                )
+            except:
+                pass
+
+                # 1. Identify User
+                user, is_new_user = user_service.get_or_create_user(phone, db)
+
+    def _check_closure(self, message: str, conversation: Conversation, db) -> bool:
+        """Check if message indicates conversation closure"""
+        message_lower = message.lower()
+        
+        if any(kw == message_lower or kw in message_lower.split() for kw in self.farewell_keywords):
+             session_manager.close_conversation(conversation.id, "user_farewell", db)
+             return True
+        return False
+
+    def _log_message(self, conversation: Conversation, sender: str, content: str, external_id: str, db):
+        """Log message to database linked to conversation"""
+        try:
+            msg = Message(
+                conversation_id=conversation.id,
+                sender=sender, # user or bot
+                direction="inbound" if sender == "user" else "outbound",
+                message_type="text",
+                content=content,
+                created_at=datetime.utcnow()
             )
-    
+            db.add(msg)
+            db.commit()
+        except Exception as e:
+            logger.error("log_message_error", error=str(e))
+
     async def send_welcome_menu(self, phone: str):
-        """Send interactive welcome menu with buttons"""
+        """Send interactive welcome menu"""
         business = business_config.get("business", {})
         
         if not is_business_open():
             response = f"¡Hola! Gracias por contactar a *{business.get('name')}* 🏪\n\n"
             response += "Actualmente estamos cerrados. 😴\n\n"
             response += get_business_hours_message()
-            response += "\n\n¡Te esperamos pronto!"
             await whatsapp_client.send_text_message(phone, response)
             return
-        
-        # Send welcome with interactive buttons
-        welcome = f"¡Hola! Bienvenido a *{business.get('name')}* 🏪\n\n"
+
+        welcome = f"¡Hola! Bienvenido a *{business.get('name')}* 🌐\n\n"
         welcome += f"{business.get('description')}\n\n"
-        welcome += "¿Qué te gustaría hacer hoy?"
+        welcome += "¿En qué podemos ayudarte hoy?"
         
         buttons = [
             {"id": "soporte", "title": "🔧 Soporte Técnico"},
@@ -106,172 +202,83 @@ class MessageProcessor:
         
         try:
             await whatsapp_client.send_interactive_buttons(
-                phone,
-                body_text=welcome,
-                buttons=buttons,
-                footer_text="Escribe 'menu', 'pedido' o 'ayuda'"
+                phone, welcome, buttons, "Selecciona una opción"
             )
-        except Exception as e:
-            # Fallback to text if interactive fails
-            logger.warning("interactive_menu_failed", error=str(e))
+        except:
+            # Fallback
             await self.handle_idle_state(phone, "")
-    
+
     async def handle_idle_state(self, phone: str, message: str):
-        """Handle idle state - welcome message"""
+        """Handle idle state response"""
         business = business_config.get("business", {})
-        
         welcome = f"¡Hola! Bienvenido al soporte técnico de *{business.get('name')}* 🌐\n\n"
-        welcome += "¿En qué puedo ayudarte hoy?\n\n"
-        welcome += "Comandos disponibles:\n"
-        welcome += "• *soporte* - Iniciar consulta técnica\n"
+        welcome += "Escribe una de estas opciones:\n"
+        welcome += "• *soporte* - Problemas técnicos\n"
         welcome += "• *planes* - Ver planes de internet\n"
-        welcome += "• *factura* - Información de pagos\n"
-        welcome += "• *ayuda* - Más información"
+        welcome += "• *factura* - Pagos y saldos"
         
         await whatsapp_client.send_text_message(phone, welcome)
 
     async def start_support(self, phone: str):
-        """Start support conversation"""
-        session_manager.update_state(phone, "technical_support")
+        """Start support flow"""
+        with get_db_context() as db:
+            conversation = session_manager.get_or_create_conversation(phone, db)
+            session_manager.update_state(conversation, "technical_support", db)
+        
         response = "🔧 *Soporte Técnico*\n\n"
-        response += "Por favor, describe tu problema o consulta con el mayor detalle posible.\n"
-        response += "Ejemplo: 'No tengo internet' o 'Mi conexión está lenta'."
+        response += "Por favor, describe tu problema con detalle (ej: 'No tengo internet', 'Luz roja en router')."
         await whatsapp_client.send_text_message(phone, response)
 
-    async def handle_support_query(self, phone: str, message: str):
-        """Handle support query using Groq"""
-        if message.lower() in ["salir", "cancelar", "terminar"]:
-            session_manager.update_state(phone, "idle")
-            await whatsapp_client.send_text_message(phone, "Has salido del soporte técnico. ¿En qué más puedo ayudarte?")
+    async def handle_support_query_v2(self, phone: str, message: str, conversation: Conversation, db):
+        """
+        Handle support query using AI with Conversation context
+        """
+        if message.lower() in ["salir", "cancelar", "menu"]:
+            session_manager.update_state(conversation, "idle", db)
+            await self.send_welcome_menu(phone)
             return
 
-        # Get chat history from session (if any)
-        context = session_manager.get_context(phone)
-        history = context.get("chat_history", [])
+        # Get context from conversation context JSON
+        context_data = conversation.context or {}
+        history = context_data.get("chat_history", [])
         
-        # Get AI response
+        # AI Response
         response = await support_service.get_ai_response(message, history)
         
-        # Update history
+        # Log Bot Response in DB
+        self._log_message(conversation, "bot", response, None, db)
+        
+        # Update History in Context
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": response})
-        
-        # Keep history short (last 6 messages)
         if len(history) > 6:
             history = history[-6:]
             
-        session_manager.set_context(phone, "chat_history", history)
+        session_manager.set_context(conversation, "chat_history", history, db)
         
-        # Send response
-        formatted_response = f"{response}\n\n"
-        formatted_response += "_(Escribe 'salir' para terminar o sigue preguntando)_"
-        await whatsapp_client.send_text_message(phone, formatted_response)
+        # Send to WhatsApp
+        await whatsapp_client.send_text_message(phone, response)
+
+    # ... (Other handler methods: show_plans, show_billing_info, request_human, show_help) ...
+    # Re-implementing them briefly to ensure class completeness
 
     async def show_plans(self, phone: str):
-        """Show ISP plans"""
-        response = "📡 *Nuestros Planes de Fibra Óptica*\n\n"
-        response += "1. *Plan Básico*: 100MB Simétricos - $20/mes\n"
-        response += "2. *Plan Pro*: 300MB Simétricos - $35/mes\n"
-        response += "3. *Plan Gamer*: 600MB Simétricos - $50/mes\n\n"
-        response += "Todos incluyen instalación gratuita y router Wi-Fi 6."
+        response = "📡 *Planes de Fibra Óptica*\n\n1. *Básico (100MB)* - $20/mes\n2. *Pro (300MB)* - $35/mes\n3. *Gamer (600MB)* - $50/mes"
         await whatsapp_client.send_text_message(phone, response)
 
     async def show_billing_info(self, phone: str):
-        """Show billing info"""
-        response = "💳 *Información de Facturación*\n\n"
-        response += "Puedes pagar tu recibo mediante:\n"
-        response += "• App Mi Clientes (pago con tarjeta)\n"
-        response += "• Transferencia Bancaria\n"
-        response += "• Puntos de recaudación externos.\n\n"
-        response += "Escribe tu número de cliente para consultar tu saldo (Próximamente)."
+        response = "💳 *Pagos*\n\nPuedes pagar vía App, Transferencia o Puntos autorizados."
         await whatsapp_client.send_text_message(phone, response)
 
     async def request_human(self, phone: str):
-        """Request human assistance"""
-        await whatsapp_client.send_text_message(
-            phone, 
-            "He notificado a un operador técnico. En breve se pondrán en contacto contigo. 👨‍💻"
-        )
+        await whatsapp_client.send_text_message(phone, "He notificado a un operador. 👨‍💻")
 
     async def show_help(self, phone: str):
-        """Show help message"""
-        business = business_config.get("business", {})
-        
-        help_text = f"ℹ️ *Ayuda - {business.get('name')}*\n\n"
-        help_text += "*Comandos disponibles:*\n\n"
-        help_text += "• *soporte* - Iniciar consulta de soporte técnico\n"
-        help_text += "• *planes* - Ver planes disponibles\n"
-        help_text += "• *factura* - Métodos de pago\n"
-        help_text += "• *humano* - Hablar con una persona\n"
-        help_text += "• *ayuda* - Mostrar esta ayuda\n"
-        
-        await whatsapp_client.send_text_message(phone, help_text)
+        await self.handle_idle_state(phone, "")
     
-    async def _ensure_user_exists(self, phone: str) -> bool:
-        """Ensure user exists in database. Returns True if user was created."""
-        try:
-            with get_db_context() as db:
-                user = db.query(User).filter(User.phone == phone).first()
-                
-                if not user:
-                    user = User(phone=phone)
-                    db.add(user)
-                    db.commit()
-                    logger.info("user_created", phone=phone)
-                    return True
-                
-                return False
-        except Exception as e:
-            logger.error("user_creation_error", phone=phone, error=str(e))
-            return False
-    
-    async def _log_message(
-        self, 
-        phone: str, 
-        direction: str, 
-        message_type: str, 
-        content: str,
-        external_id: str = None
-    ):
-        """Log message to database"""
-        try:
-            with get_db_context() as db:
-                user = db.query(User).filter(User.phone == phone).first()
-                
-                if not user:
-                    return
-                
-                # Get or create session
-                db_session = db.query(DBSession).filter(
-                    DBSession.phone == phone,
-                    DBSession.user_id == user.id
-                ).order_by(DBSession.created_at.desc()).first()
-                
-                if not db_session:
-                    redis_session = session_manager.get_session(phone)
-                    db_session = DBSession(
-                        user_id=user.id,
-                        phone=phone,
-                        state=redis_session.get("state", "idle") if redis_session else "idle",
-                        context=redis_session.get("context", {}) if redis_session else {}
-                    )
-                    db.add(db_session)
-                    db.flush()
-                
-                message = Message(
-                    session_id=db_session.id,
-                    direction=direction,
-                    message_type=message_type,
-                    content=content,
-                    meta_data={"external_id": external_id} if external_id else {}
-                )
-                
-                db.add(message)
-                db.commit()
-                
-        except Exception as e:
-            logger.error("message_logging_error", phone=phone, error=str(e))
+    async def _send_unknown_intent_response(self, phone: str):
+        await self.handle_idle_state(phone, "")
 
 
-# Global message processor instance
+# Global instance
 message_processor = MessageProcessor()
