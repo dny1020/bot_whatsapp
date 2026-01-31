@@ -133,7 +133,7 @@ class RAGService:
             '.pdf': PyPDFLoader,
             '.txt': TextLoader,
             '.docx': Docx2txtLoader,
-            '.md': UnstructuredMarkdownLoader
+            '.md': TextLoader  # Use TextLoader instead of Unstructured to save space
         }
         
         for doc_path in self.docs_path.rglob("*"):

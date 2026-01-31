@@ -154,9 +154,10 @@ async def twilio_webhook_handler(request: Request):
                    message_sid=message_sid,
                    profile_name=profile_name)
         
-        # Process text message
+        # Process text message asynchronously to avoid Twilio timeouts
         if body and from_phone:
-            await message_processor.process_message(from_phone, body, message_sid)
+            import asyncio
+            asyncio.create_task(message_processor.process_message(from_phone, body, message_sid))
         else:
             logger.warning("twilio_webhook_missing_data", from_phone=from_phone, has_body=bool(body))
         

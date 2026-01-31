@@ -91,8 +91,8 @@ class MessageProcessor:
                     )
                     return
 
-                # Mark as read
-                await whatsapp_client.mark_as_read(message_id)
+                # Mark as read (Not supported by Twilio, but we keep the logic flow)
+                # await whatsapp_client.mark_as_read(message_id)
                 
                 # 5. Handle New User / Welcome logic
                 if is_new_user or conversation.message_count <= 1:

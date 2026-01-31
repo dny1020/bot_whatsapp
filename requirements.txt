@@ -39,5 +39,4 @@ sentence-transformers==3.3.1
 faiss-cpu==1.9.0.post1
 pypdf==4.0.1
 python-docx==1.1.0
-torch>=2.0.0
-unstructured
+# torch is installed separately in Dockerfile for CPU optimization
