@@ -29,11 +29,11 @@ COPY init_db.py /app/
 # Create required directories
 RUN mkdir -p /app/logs /app/data/vector_store
 
-# Set Python path
+# Set Python path       
 ENV PYTHONPATH=/app
 
 # Expose unified port
-EXPOSE 8000
+EXPOSE 9090
 
 # Run unified application
-CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "9090"]
