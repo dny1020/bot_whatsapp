@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-chatbot_db}
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-chatbot}:${POSTGRES_PASSWORD:-chatbot_password}@postgres:5432/${POSTGRES_DB:-chatbot_db}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U chatbot -d chatbot_db"]
       interval: 10s
@@ -38,8 +38,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./logs:/app/logs
-      - ./config:/app/config:ro
+      - ./data/vector_store:/app/data/vector_store
     restart: unless-stopped
     networks:
       - chatbot_network
@@ -49,8 +48,7 @@ services:
           memory: 256M
           cpus: '0.5'
 
-volumes:
-  postgres_data:
+
 
 networks:
   chatbot_network:

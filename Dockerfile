@@ -21,7 +21,7 @@ COPY app.py /app/
 
 
 # Create required directories
-RUN mkdir -p /app/logs /app/data/vector_store
+RUN mkdir -p /app/data/vector_store /app/config
 
 # Set Python path       
 ENV PYTHONPATH=/app

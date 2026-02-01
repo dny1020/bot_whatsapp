@@ -92,17 +92,11 @@ business_config = load_business_config()
 # ============================================================================
 
 def setup_logging():
-    """Configure structured logging"""
-    log_dir = Path(__file__).parent.parent.parent / "logs"
-    log_dir.mkdir(exist_ok=True)
-    
+    """Configure structured logging to console"""
     logging.basicConfig(
         level=getattr(logging, settings.log_level),
         format="%(message)s",
-        handlers=[
-            logging.FileHandler(log_dir / "app.log"),
-            logging.StreamHandler()
-        ]
+        handlers=[logging.StreamHandler()]
     )
     
     structlog.configure(
