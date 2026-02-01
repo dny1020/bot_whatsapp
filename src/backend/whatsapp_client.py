@@ -137,7 +137,7 @@ class WhatsAppClient:
         if footer_text:
             full_message += f"_{footer_text}_\n\n"
         
-        full_message += "Responde con el número de tu opción."
+        full_message += "Responda con el número de su opción."
         
         return await self.send_text_message(to, full_message)
     

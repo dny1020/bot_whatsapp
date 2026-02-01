@@ -192,9 +192,9 @@ class MessageProcessor:
             await whatsapp_client.send_text_message(phone, response)
             return
 
-        welcome = f"¡Hola! Bienvenido a *{business.get('name')}* 🌐\n\n"
+        welcome = f"Bienvenido al servicio de atención de *{business.get('name')}* 🌐\n\n"
         welcome += f"{business.get('description')}\n\n"
-        welcome += "¿En qué podemos ayudarte hoy?"
+        welcome += "¿En qué podemos ayudarle el día de hoy?"
         
         buttons = [
             {"id": "soporte", "title": "🔧 Soporte Técnico"},
@@ -213,11 +213,11 @@ class MessageProcessor:
     async def handle_idle_state(self, phone: str, message: str):
         """Handle idle state response"""
         business = business_config.get("business", {})
-        welcome = f"¡Hola! Bienvenido al soporte técnico de *{business.get('name')}* 🌐\n\n"
-        welcome += "Escribe una de estas opciones:\n"
-        welcome += "• *soporte* - Problemas técnicos\n"
-        welcome += "• *planes* - Ver planes de internet\n"
-        welcome += "• *factura* - Pagos y saldos"
+        welcome = f"Estimado cliente, bienvenido al soporte técnico de *{business.get('name')}* 🌐\n\n"
+        welcome += "Por favor, escriba una de las siguientes opciones para asistirle:\n"
+        welcome += "• *soporte* - Asistencia técnica\n"
+        welcome += "• *planes* - Información de planes de internet\n"
+        welcome += "• *factura* - Consultas de pagos y saldos"
         
         await whatsapp_client.send_text_message(phone, welcome)
 
@@ -227,8 +227,8 @@ class MessageProcessor:
             conversation = session_manager.get_or_create_conversation(phone, db)
             session_manager.update_state(conversation, "technical_support", db)
         
-        response = "🔧 *Soporte Técnico*\n\n"
-        response += "Por favor, describe tu problema con detalle (ej: 'No tengo internet', 'Luz roja en router')."
+        response = "🔧 *Centro de Soporte Técnico*\n\n"
+        response += "Por favor, describa detalladamente el inconveniente que presenta (ej: 'No tengo servicio', 'Luz roja en el equipo')."
         await whatsapp_client.send_text_message(phone, response)
 
     async def handle_support_query_v2(self, phone: str, message: str, conversation: Conversation, db):
