@@ -55,10 +55,10 @@ def get_db_context():
 Base = declarative_base()
 
 class ConversationStatus(str, enum.Enum):
-    ACTIVE = "active"
-    IDLE = "idle"
-    CLOSED = "closed"
-    ARCHIVED = "archived"
+    active = "active"
+    idle = "idle"
+    closed = "closed"
+    archived = "archived"
 
 class User(Base):
     """User/Customer model"""
@@ -91,7 +91,7 @@ class Conversation(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     phone = Column(String(20), index=True, nullable=False)
     
-    status = Column(Enum(ConversationStatus), default=ConversationStatus.ACTIVE, index=True)
+    status = Column(Enum(ConversationStatus), default=ConversationStatus.active, index=True)
     state = Column(String(50), default="idle")
     context = Column(JSON, default={})
     

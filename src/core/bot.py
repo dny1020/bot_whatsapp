@@ -105,11 +105,11 @@ class SessionManager:
     def get_or_create_conversation(self, phone: str, db: DBSession) -> Conversation:
         conversation = db.query(Conversation).filter(
             Conversation.phone == phone,
-            Conversation.status.in_([ConversationStatus.ACTIVE, ConversationStatus.IDLE])
+            Conversation.status.in_([ConversationStatus.active, ConversationStatus.idle])
         ).order_by(Conversation.last_activity.desc()).first()
         
         if conversation and datetime.utcnow() > conversation.ttl_expires_at:
-            conversation.status = ConversationStatus.CLOSED
+            conversation.status = ConversationStatus.closed
             db.commit()
             conversation = None
         
@@ -118,7 +118,7 @@ class SessionManager:
             tid = f"{phone.replace('+','')}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:6]}"
             conversation = Conversation(
                 id=tid, user_id=user.id if user else 0, phone=phone,
-                status=ConversationStatus.ACTIVE, state="idle",
+                status=ConversationStatus.active, state="idle",
                 ttl_expires_at=datetime.utcnow() + timedelta(hours=24)
             )
             db.add(conversation)
@@ -127,7 +127,7 @@ class SessionManager:
             db.refresh(conversation)
         
         conversation.last_activity = datetime.utcnow()
-        if conversation.status == ConversationStatus.IDLE: conversation.status = ConversationStatus.ACTIVE
+        if conversation.status == ConversationStatus.idle: conversation.status = ConversationStatus.active
         db.commit()
         return conversation
 
