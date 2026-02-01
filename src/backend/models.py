@@ -78,7 +78,7 @@ class Message(Base):
     """Message log"""
     __tablename__ = "messages"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(100), primary_key=True, index=True)  # Changed to String for Twilio MessageSid
     conversation_id = Column(String(100), ForeignKey("conversations.id"), nullable=False) # Changed from session_id
     
     sender = Column(String(20))  # 'user' or 'bot' # New

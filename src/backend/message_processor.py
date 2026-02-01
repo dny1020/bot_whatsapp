@@ -164,7 +164,11 @@ class MessageProcessor:
     def _log_message(self, conversation: Conversation, sender: str, content: str, external_id: str, db):
         """Log message to database linked to conversation"""
         try:
+            # Use external_id (Twilio SID) as primary key if available, otherwise generate one
+            msg_id = external_id or f"bot_{int(datetime.utcnow().timestamp())}_{conversation.id[:8]}"
+            
             msg = Message(
+                id=msg_id,
                 conversation_id=conversation.id,
                 sender=sender, # user or bot
                 direction="inbound" if sender == "user" else "outbound",
