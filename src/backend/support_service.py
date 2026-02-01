@@ -103,6 +103,10 @@ class SupportService:
             logger.error("support_service_error", error=str(e))
             return "Lo siento, ocurrió un error técnico. Por favor intenta de nuevo."
     
+    def _build_system_prompt(self, context: str) -> str:
+        """
+        Build system prompt with RAG context
+        """
         return f"""Eres el Asistente Virtual Especializado de soporte técnico para un Proveedor de Internet (ISP).
 Tu objetivo es brindar asistencia técnica profesional, cortés y eficiente.
 
