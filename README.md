@@ -55,8 +55,9 @@ docker build -t bot_whatsapp:v2 .
 # Iniciar servicios
 docker-compose up -d
 
-# Inicializar base de datos
-docker-compose exec app python init_db.py
+# Nota: La base de datos se inicializa automáticamente al arrancar la app.
+# Si desea reiniciarla manualmente:
+docker compose exec app python scripts/reset_db.py
 
 # Inicializar vector store
 docker-compose exec app python scripts/update_rag.py
@@ -72,29 +73,23 @@ docker-compose exec app python scripts/update_rag.py
 
 ```
 bot_whatsapp/
-├── app.py                      # App unificada (webhook + backend)
+├── app.py                      # App unificada (webhook + backend + api)
 ├── Dockerfile                  # Build único
-├── docker-compose.yml          # 1 servicio
+├── docker-compose.yml          # Orquestación (App + Postgres)
 ├── requirements.txt            # Dependencies
 │
 ├── src/
-│   ├── backend/
-│   │   ├── message_processor.py   # Idempotencia + flujo
-│   │   ├── session_manager.py     # Sesiones 24h
-│   │   ├── nlp_service.py         # Clasificación intents
-│   │   ├── support_service.py     # RAG integrado
-│   │   ├── rag_service_v2.py      # Vector DB
-│   │   └── ...
-│   └── utils/
+│   └── core/                   # Estructura simplificada
+│       ├── config.py           # Config, Logging y Helpers
+│       ├── database.py         # DB, Modelos y Sesiones
+│       ├── knowledge.py        # RAG (BM25) y LLM (Groq)
+│       ├── bot.py              # Procesador de mensajes y NLP
+│       └── api.py              # Rutas FastAPI
 │
 ├── docs/                       # Base conocimiento RAG
-│   ├── faqs/
-│   ├── manuals/
-│   ├── procedures/
-│   └── policies/
-│
 └── scripts/
-    └── update_rag.py          # Actualizar vector store
+    ├── update_rag.py           # Actualizar base vectorial
+    └── reset_db.py             # Reiniciar base de datos
 ```
 
 ##  Flujo del Bot
