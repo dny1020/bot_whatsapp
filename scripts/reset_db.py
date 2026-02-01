@@ -1,17 +1,13 @@
 """
-Reset Database Script
-DROPS ALL TABLES and recreates them.
-Use with caution.
+Reset Database Script - DROPS AND RECREATES TABLES
 """
 import sys
-import os
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.backend.database import engine
-from src.backend.models import Base
+from src.core.database import engine, Base, init_db
 
 def reset_db():
     print("  Dropping all tables...")
@@ -19,12 +15,8 @@ def reset_db():
     print(" Tables dropped.")
     
     print(" Creating new tables...")
-    Base.metadata.create_all(bind=engine)
+    init_db()
     print(" Tables created successfully.")
-    
-    print("\nSchema updated:")
-    for table in Base.metadata.sorted_tables:
-        print(f" - {table.name}")
 
 if __name__ == "__main__":
     try:
