@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # Feature Flags
     enable_rag: bool = Field(default=True, alias="ENABLE_RAG")
     
+    # Security
+    allowed_origins: str = Field(default="*", alias="ALLOWED_ORIGINS")
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
