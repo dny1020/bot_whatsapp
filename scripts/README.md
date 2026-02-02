@@ -30,5 +30,20 @@ docker compose exec app python scripts/reset_db.py
 
 ---
 
+## 3.  `test_conversation_lifecycle.py` - Integrated Testing
+This script simulates a real user conversation flow to ensure all components (NLP, Database, Sessions) are working correctly together.
+
+**When to use:**
+- After making changes to the core bot logic.
+- Before deploying a new version to production.
+
+**Usage:**
+```bash
+docker compose exec app pytest scripts/test_conversation_lifecycle.py -v
+```
+
+
+---
+
 > [!WARNING]  
 > Using `reset_db.py` will permanently delete all customer data and chat history. Use with caution.

@@ -1,237 +1,106 @@
-# Bot WhatsApp ISP - Soporte Técnico Automatizado 
+# Bot WhatsApp ISP - Soporte Técnico Automatizado 🤖
 
-Bot inteligente para soporte técnico de ISP con **RAG vectorial**, integrado con WhatsApp Cloud API y potenciado por LLM.
+Bot inteligente para soporte técnico de ISP con **RAG (BM25)**, integrado con Twilio WhatsApp y potenciado por LLM (Llama 3 vía Groq).
 
-##  Características v2.0
+## 🚀 Características v2.1 (Simplificada)
 
-###  Inteligencia Avanzada
-- **RAG Vectorial**: Base de conocimiento con búsqueda semántica (FAISS)
-- **LLM Controlado**: Responde SOLO desde documentación recuperada
-- **NLP Limitado**: Clasificación de intents con whitelist
+### 🧠 Inteligencia Eficiente
+- **RAG Local**: Base de conocimiento con búsqueda rápida BM25 (sin necesidad de GPU/OpenAI).
+- **LLM Groq**: Respuestas ultrarrápidas usando Llama 3 desde la nube.
+- **NLP Basado en Reglas**: Clasificación de intenciones robusta y veloz.
 
-###  Robustez
-- **Idempotencia**: Evita mensajes duplicados (Redis)
-- **Sesiones 24h**: Memoria conversacional extendida
-- **Arquitectura Unificada**: 1 servicio, 1 Dockerfile
-
-###  Base de Conocimiento
-- Documentos en `docs/` (PDF, DOCX, MD, TXT)
-- Actualización sin código: agregar docs y ejecutar script
-- Búsqueda semántica con embeddings OpenAI
-
-##  Inicio Rápido
-
-### 1. Variables de Entorno
-
-```bash
-cp .env.example .env
-```
-
-Editar `.env` con:
-```bash
-# WhatsApp
-WHATSAPP_ACCESS_TOKEN=EAA...
-WHATSAPP_PHONE_ID=123...
-WHATSAPP_VERIFY_TOKEN=tu_token_secreto
-
-# IA
-GROQ_API_KEY=gsk_...          # LLM
-
-
-# BD
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://redis:6379
-
-# Dominio
-DOMAIN=bot.tudominio.com
-```
-
-### 2. Deploy
-
-```bash
-# Build
-docker build -t bot_whatsapp:v2 .
-
-# Iniciar servicios
-docker-compose up -d
-
-# Nota: La base de datos se inicializa automáticamente al arrancar la app.
-# Si desea reiniciarla manualmente:
-docker compose exec app python scripts/reset_db.py
-
-# Inicializar vector store
-docker-compose exec app python scripts/update_rag.py
-```
-
-### 3. Configurar Webhook en Meta
-
-- URL: `https://tudominio.com/webhook`
-- Verify Token: (el de tu .env)
-- Suscribirse a: `messages`
-
-## 📁 Estructura
-
-```
-bot_whatsapp/
-├── app.py                      # App unificada (webhook + backend + api)
-├── Dockerfile                  # Build único
-├── docker-compose.yml          # Orquestación (App + Postgres)
-├── requirements.txt            # Dependencies
-│
-├── src/
-│   └── core/                   # Estructura simplificada
-│       ├── config.py           # Config, Logging y Helpers
-│       ├── database.py         # DB, Modelos y Sesiones
-│       ├── knowledge.py        # RAG (BM25) y LLM (Groq)
-│       ├── bot.py              # Procesador de mensajes y NLP
-│       └── api.py              # Rutas FastAPI
-│
-├── docs/                       # Base conocimiento RAG
-└── scripts/
-    ├── update_rag.py           # Actualizar base vectorial
-    └── reset_db.py             # Reiniciar base de datos
-```
-
-##  Flujo del Bot
-
-```
-WhatsApp Message
-    ↓
-Idempotency Check (Redis)
-    ↓
-Load Session (24h TTL)
-    ↓
-NLP Classify Intent
-    ↓
-State Machine
-    ↓
-IF state=SOPORTE:
-  → RAG Retrieve (FAISS)
-  → LLM Generate
-    ↓
-Send Response
-    ↓
-Save Session
-```
-
-##  Comandos Útiles
-
-### Ver Logs
-```bash
-docker-compose logs -f app
-docker-compose logs app | grep rag_retrieval
-docker-compose logs app | grep duplicate_message
-```
-
-### Actualizar Base de Conocimiento
-```bash
-# 1. Agregar documentos
-cp nuevo_manual.pdf docs/manuals/
-cp faqs.md docs/faqs/
-
-# 2. Actualizar vector store
-docker-compose exec app python scripts/update_rag.py
-
-# 3. Reiniciar (opcional)
-docker-compose restart app
-```
-
-### Probar Bot en Terminal
-
-**Opción 1: Solo Groq (más simple, sin RAG)**
-```bash
-# 1. Instalar dependencias ligeras
-pip install -r requirements-dev.txt
-
-# 2. Configurar solo GROQ_API_KEY en .env
-echo "GROQ_API_KEY=gsk_..." >> .env
-
-# 3. Chatear con el bot
-python scripts/test_chat_simple.py
-```
-
-**Opción 2: Con Docker (completo con RAG)**
-```bash
-# Chat interactivo con RAG + base de datos
-docker-compose exec app python scripts/test_chat.py
-```
-
-**Comandos del chat:**
-- `/quit` o `/salir` - Salir
-- `/clear` - Limpiar historial
-- `/stats` - Ver estadísticas de uso
-```
-
-**Comandos del chat:**
-- `/rag <query>` - Probar solo RAG
-- `/stats` - Ver estadísticas
-- `/quit` - Salir
-
-### Health Check
-```bash
-curl http://localhost:8000/health
-```
-
-##  Endpoints
-
-- `GET /` - Info del servicio
-- `GET /health` - Health check
-- `GET/POST /webhook` - WhatsApp webhook
-- `GET /admin` - Panel admin (futuro)
-- `/api/v1/*` - API backend
-
-##  Testing
-
-```bash
-# 1. Enviar mensaje desde WhatsApp
-"soporte"
-"no tengo internet"
-
-# 2. Bot responde con info de docs/faqs/
-
-# 3. Verificar logs
-docker-compose logs app | grep "rag_retrieval"
-```
-
-##  Próximos Pasos
-
--  Sprint 1: RAG Vectorial (completado)
--  Sprint 2: Actions Layer (reboot_ont, open_ticket, etc.)
--  Sprint 3: Escalamiento inteligente + métricas
-
-##  Troubleshooting
-
-### Mensajes duplicados
-```bash
-# Verificar idempotencia en Redis
-docker exec -it chatbot_redis redis-cli
-> KEYS processed:*
-```
-
-### RAG no funciona
-```bash
-# Verificar vector store existe
-docker-compose exec app ls -la data/vector_store/
-
-# Reinicializar
-docker-compose exec app python scripts/update_rag.py
-```
-
-### Bot no responde
-```bash
-# Ver logs de errores
-docker-compose logs app | grep ERROR
-
-# Verificar health
-curl http://localhost:8000/health
-```
-
-##  Licencia
-
-MIT License
+### 🛡️ Robustez y Simplicidad
+- **Arquitectura Unificada**: Todo el motor en 5 archivos clave dentro de `src/core/`.
+- **Persistencia Directa**: Base de datos y memoria del bot guardadas localmente en `./data`.
+- **Dockerizado**: Un solo `Dockerfile` para un despliegue instantáneo.
 
 ---
 
-**Versión:** 1.0.0  
-**Estado:**  Producción  
-**Soporte:** Ver logs con `docker-compose logs app`
+## 🛠️ Inicio Rápido
+
+### 1. Variables de Entorno
+Crea un archivo `.env` basado en la siguiente estructura:
+
+```bash
+# Twilio
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_PHONE_NUMBER=whatsapp:+1...
+
+# IA
+GROQ_API_KEY=gsk_...
+
+# Base de Datos
+POSTGRES_USER=chatbot
+POSTGRES_PASSWORD=chatbot_password
+POSTGRES_DB=chatbot_db
+DATABASE_URL=postgresql+psycopg2://chatbot:chatbot_password@postgres:5432/chatbot_db
+```
+
+### 2. Despliegue con Docker
+```bash
+# Iniciar servicios
+docker compose up -d
+
+# Inicializar base de datos (Primera vez)
+docker compose exec app python scripts/reset_db.py
+
+# Aprender documentos de docs/
+docker compose exec app python scripts/update_rag.py
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+bot_whatsapp/
+├── app.py              # Entrada principal (FastAPI + Webhook)
+├── src/core/           # El "Motor" del Bot
+│   ├── config.py       # Configuración y Helpers
+│   ├── database.py     # Modelos y SQL
+│   ├── knowledge.py    # RAG y conexión a IA
+│   ├── bot.py          # Lógica de chats y NLP
+│   └── api.py          # Rutas de administración
+├── docs/               # Suelta tus manuales aquí (PDF, MD, TXT)
+├── data/               # Memoria persistente (Base de datos e índices)
+└── scripts/            # Herramientas de mantenimiento
+```
+
+---
+
+## 🧪 Pruebas y Mantenimiento
+
+### Ejecutar Test de Integración
+Verifica que todo el flujo (NLP -> DB -> RAG) funcione correctamente:
+```bash
+docker compose exec app pytest scripts/test_conversation_lifecycle.py -v
+```
+
+### Ver Logs en Tiempo Real
+```bash
+docker compose logs -f app
+```
+
+### Actualizar Conocimiento
+Si añades archivos a `docs/`, ejecuta:
+```bash
+docker compose exec app python scripts/update_rag.py
+```
+
+### Inspección de Base de Datos
+Accede al contenedor para ver usuarios, mensajes y tickets:
+```bash
+docker compose exec postgres psql -U chatbot -d chatbot_db
+
+# Comandos útiles:
+\dt                  # Listar tablas
+SELECT * FROM users; # Ver clientes registrados
+\q                   # Salir
+```
+
+---
+
+
+## 📝 Licencia
+MIT License
