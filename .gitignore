@@ -11,6 +11,8 @@ backups/
 # Logs
 logs/
 *.log
+docker_logs.txt
+*_logs.txt
 
 # Data
 data/

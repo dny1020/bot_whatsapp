@@ -36,10 +36,17 @@ class NLPService:
             "support": [
                 r"\b(soporte|ayuda técnica|asistencia técnica|problema técnico|no funciona|no enciende|no prende|fallo|falla)\b",
                 r"\b(internet|conexión|conexion|router|módem|modem|wifi|velocidad|luz roja|los roja)\b",
-                r"\b(agua|mojó|mojo|caída|caida|lento|lentitud)\b"
+                r"\b(agua|mojó|mojo|caída|caida|lento|lentitud)\b",
+                r"^1$"
             ],
-            "plans": [r"\b(plan|planes|paquete|paquetes|fibra|megas|mb)\b"],
-            "billing": [r"\b(factura|pago|recibo|cuenta|deuda|saldo)\b"],
+            "plans": [
+                r"\b(plan|planes|paquete|paquetes|fibra|megas|mb)\b",
+                r"^2$"
+            ],
+            "billing": [
+                r"\b(factura|pago|recibo|cuenta|deuda|saldo)\b",
+                r"^3$"
+            ],
             "hours": [r"\b(horario|hora|abierto|cerrado|atienden|atención)\b"],
             "payment": [r"\b(pago|pagar|efectivo|tarjeta|transferencia)\b"],
             "help": [r"\b(ayuda|help|asistencia|información|informacion)\b"],
@@ -233,9 +240,7 @@ class MessageProcessor:
         await whatsapp_client.send_text_message(phone, response)
 
     async def handle_idle_state(self, phone: str, message: str):
-        business = business_config.get("business", {})
-        welcome = f"Estimado cliente, bienvenido al soporte técnico de *{business.get('name')}* 🌐\n\nEscriba: *soporte*, *planes* o *factura*."
-        await whatsapp_client.send_text_message(phone, welcome)
+        await self.send_welcome_menu(phone)
 
     async def show_plans(self, phone: str):
         await whatsapp_client.send_text_message(phone, "📡 *Planes de Fibra Óptica*\n\n1. *Básico (100MB)* - $20/mes\n2. *Pro (300MB)* - $35/mes\n3. *Gamer (600MB)* - $50/mes")
