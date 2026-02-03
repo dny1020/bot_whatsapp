@@ -1,0 +1,97 @@
+{
+    "intents": {
+        "allowed": [
+            "greeting",
+            "support",
+            "hours",
+            "payment",
+            "help",
+            "thanks",
+            "farewell",
+            "complaint",
+            "affirmative",
+            "negative",
+            "plans",
+            "billing"
+        ],
+        "patterns": {
+            "greeting": [
+                "\\b(hola|buenos días|buenas tardes|buenas noches|hey|hi|hello|saludos)\\b"
+            ],
+            "support": [
+                "\\b(soporte|ayuda técnica|asistencia técnica|problema técnico|no funciona|no enciende|no prende|fallo|falla)\\b",
+                "\\b(internet|conexión|conexion|router|módem|modem|wifi|velocidad|luz roja|los roja)\\b",
+                "\\b(agua|mojó|mojo|caída|caida|lento|lentitud)\\b",
+                "^1$"
+            ],
+            "plans": [
+                "\\b(plan|planes|paquete|paquetes|fibra|megas|mb)\\b",
+                "^2$"
+            ],
+            "billing": [
+                "\\b(factura|pago|recibo|cuenta|deuda|saldo)\\b",
+                "^3$"
+            ],
+            "hours": [
+                "\\b(horario|hora|abierto|cerrado|atienden|atención)\\b"
+            ],
+            "payment": [
+                "\\b(pago|pagar|efectivo|tarjeta|transferencia)\\b"
+            ],
+            "help": [
+                "\\b(ayuda|help|asistencia|información|informacion)\\b"
+            ],
+            "thanks": [
+                "\\b(gracias|thank|agradezco)\\b"
+            ],
+            "farewell": [
+                "\\b(adiós|adios|chao|hasta luego|bye)\\b"
+            ],
+            "complaint": [
+                "\\b(queja|reclamo|malo|terrible|pésimo|pesimo)\\b"
+            ],
+            "affirmative": [
+                "\\b(sí|si|yes|ok|okay|vale|dale|perfecto|claro|correcto|confirmar)\\b"
+            ],
+            "negative": [
+                "^(no|nop|nope|nunca|jamás|jamas|negativo)$",
+                "\\b(cancelar|detener|parar)\\b"
+            ]
+        }
+    },
+    "flows": {
+        "welcome": {
+            "text": "Bienvenido al servicio de atención de *{business_name}* 🌐\n\n¿En qué podemos ayudarle el día de hoy?",
+            "header": "Menú de Inicio",
+            "buttons": [
+                {
+                    "id": "soporte",
+                    "title": "🔧 Soporte Técnico"
+                },
+                {
+                    "id": "planes",
+                    "title": "📡 Ver Planes"
+                },
+                {
+                    "id": "factura",
+                    "title": "💳 Facturación"
+                }
+            ]
+        },
+        "technical_support": {
+            "start_message": "🔧 *Centro de Soporte Técnico*\n\nPor favor, describa detalladamente el inconveniente que presenta (ej: 'No tengo servicio').",
+            "exit_commands": ["salir", "cancelar", "menu"]
+        },
+        "plans": {
+            "text": "📡 *Planes de Fibra Óptica*\n\n1. *Básico (100MB)* - $20/mes\n2. *Pro (300MB)* - $35/mes\n3. *Gamer (600MB)* - $50/mes"
+        },
+        "billing": {
+            "text": "💳 *Pagos*\n\nPuedes pagar vía App, Transferencia o Puntos autorizados."
+        }
+    },
+    "defaults": {
+        "fallback_support_message": "🔧 *Soporte Técnico*\n\nPor favor, describa su problema.",
+        "fallback_plans_message": "Consulte nuestros planes disponibles.",
+        "fallback_billing_message": "Información de facturación."
+    }
+}

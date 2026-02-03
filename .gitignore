@@ -54,3 +54,6 @@ docker-compose.override.yml
 README.old.md
 
 output_server.txt
+
+.ruff_cache
+.github/copilot-instructions.md
