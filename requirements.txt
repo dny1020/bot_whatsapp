@@ -1,7 +1,6 @@
 # ===================================
-# VERSIÓN OPTIMIZADA - GROQ + LOCAL EMBEDDINGS + TWILIO
+# VERSIÓN OPTIMIZADA - GROQ + BM25 RAG + TWILIO (via httpx)
 # ===================================
-# Usa Groq para LLM, HuggingFace para embeddings, y Twilio para WhatsApp
 
 # Core Web Framework
 fastapi==0.109.2
@@ -11,29 +10,17 @@ pydantic-settings>=2.6.0
 python-dotenv==1.0.0
 httpx==0.26.0
 python-multipart==0.0.9
-psycopg2-binary==2.9.9
-
-# WhatsApp - Twilio
-twilio==9.0.0
 
 # Database
 sqlalchemy==2.0.46
-alembic==1.13.1
+psycopg2-binary==2.9.9
 
-# Security
-cryptography==42.0.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-
-# Monitoring
-prometheus-client==0.19.0
+# Logging
 structlog==24.1.0
 
-# RAG & Embeddings (Lightweight Version)
-langchain==0.3.14
+# RAG & Document Processing
 langchain-community==0.3.14
 langchain-text-splitters==0.3.5
 pypdf==4.0.1
 python-docx==1.1.0
 rank_bm25==0.2.2
-# No torch or heavy ML models to fit 256MB RAM
