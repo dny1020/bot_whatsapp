@@ -1,5 +1,5 @@
 """
-Manejador de mensajes
+Manejador de mensajes - Navegación dinámica de flujos
 """
 
 from datetime import datetime
@@ -11,6 +11,9 @@ from .services import whatsapp, session, llm
 
 logger = get_logger(__name__)
 
+# Comandos para volver al menú principal
+EXIT_COMMANDS = ["salir", "cancelar", "menu", "inicio", "0"]
+
 
 async def process_message(phone, message, external_id=None):
     """Procesar mensaje entrante de WhatsApp"""
@@ -18,29 +21,51 @@ async def process_message(phone, message, external_id=None):
     db = get_db_session()
 
     try:
-        # Obtener o crear usuario y conversación
         user, _ = session.get_or_create_user(phone, db)
         conversation = session.get_or_create_conversation(phone, db)
 
-        # Verificar que no sea duplicado
+        # Verificar duplicado
         if external_id:
             existing = db.query(Message).filter(Message.id == external_id).first()
             if existing:
                 return
 
-        # Guardar mensaje del usuario
         _save_message(conversation, "user", message, external_id, db)
-        
-        # Clasificar intención
-        intent = llm.classify_intent(message)
 
-        # Procesar según estado de la conversación
-        if conversation.state == "idle":
-            await _handle_idle(phone, intent, db)
-        elif conversation.state == "technical_support":
-            await _handle_support(phone, message, conversation, db)
+        # Obtener estado actual del flujo
+        context = conversation.context or {}
+        current_flow = context.get("current_flow", "welcome")
+        
+        # Verificar si quiere salir al menú
+        if message.lower().strip() in EXIT_COMMANDS:
+            await _go_to_flow(phone, "welcome", conversation, db)
+            return
+
+        # Obtener el flujo actual
+        flow_data = flows_config.get("flows", {}).get(current_flow, {})
+        buttons = flow_data.get("buttons", [])
+
+        # Si el flujo actual tiene botones, intentar navegar
+        if buttons:
+            next_flow = _get_next_flow_from_input(message, buttons)
+            
+            if next_flow:
+                await _go_to_flow(phone, next_flow, conversation, db)
+                return
+
+        # Si estamos en un flujo de soporte y no hay navegación, usar LLM
+        if current_flow.startswith("support_"):
+            await _handle_llm_support(phone, message, conversation, db)
+            return
+
+        # Si no hay match, mostrar el flujo actual de nuevo o el fallback
+        if current_flow == "welcome":
+            await _go_to_flow(phone, "welcome", conversation, db)
         else:
-            await _send_welcome_menu(phone)
+            # Mostrar mensaje de no entendido y el flujo actual
+            fallback = flows_config.get("defaults", {}).get("fallback", "No entendí su respuesta.")
+            await whatsapp.send_message(phone, fallback)
+            await _show_flow(phone, current_flow)
 
     except Exception as e:
         logger.error(f"Error procesando mensaje: {e}")
@@ -48,30 +73,66 @@ async def process_message(phone, message, external_id=None):
         db.close()
 
 
-async def _handle_idle(phone, intent, db):
-    """Manejar mensaje cuando la conversación está idle"""
-    if intent == "support":
-        await _start_support(phone, db)
-    elif intent == "plans":
-        await _show_plans(phone)
-    elif intent == "billing":
-        await _show_billing(phone)
+def _get_next_flow_from_input(message, buttons):
+    """Determinar el siguiente flujo basado en el input del usuario"""
+    message = message.strip()
+    
+    # Intentar por número (1, 2, 3...)
+    if message.isdigit():
+        index = int(message) - 1
+        if 0 <= index < len(buttons):
+            return buttons[index].get("id")
+    
+    # Intentar por título exacto o parcial
+    message_lower = message.lower()
+    for btn in buttons:
+        title = btn.get("title", "").lower()
+        # Quitar emojis para comparar
+        title_clean = ''.join(c for c in title if ord(c) < 128).strip().lower()
+        if message_lower == title_clean or message_lower in title_clean:
+            return btn.get("id")
+    
+    return None
+
+
+async def _go_to_flow(phone, flow_id, conversation, db):
+    """Navegar a un flujo específico"""
+    session.update_conversation_state(
+        conversation, 
+        conversation.state, 
+        db, 
+        {"current_flow": flow_id}
+    )
+    await _show_flow(phone, flow_id)
+
+
+async def _show_flow(phone, flow_id):
+    """Mostrar un flujo (con botones o solo texto)"""
+    flow_data = flows_config.get("flows", {}).get(flow_id, {})
+    
+    if not flow_data:
+        # Flujo no existe, mostrar welcome
+        flow_data = flows_config.get("flows", {}).get("welcome", {})
+        flow_id = "welcome"
+    
+    # Obtener texto y reemplazar variables
+    business = business_config.get("business", {})
+    text = flow_data.get("text", "")
+    text = text.replace("{business_name}", business.get("name", "nuestra empresa"))
+    
+    buttons = flow_data.get("buttons", [])
+    header = flow_data.get("header", "")
+    
+    if buttons:
+        # Flujo con opciones
+        await whatsapp.send_menu(phone, text, buttons, header)
     else:
-        await _send_welcome_menu(phone)
+        # Flujo terminal (solo texto)
+        await whatsapp.send_message(phone, text)
 
 
-async def _handle_support(phone, message, conversation, db):
-    """Manejar mensaje en flujo de soporte técnico"""
-    flow = flows_config.get("flows", {}).get("technical_support", {})
-    exit_commands = flow.get("exit_commands", ["salir", "cancelar", "menu"])
-
-    # Verificar si quiere salir
-    if message.lower() in exit_commands:
-        session.update_conversation_state(conversation, "idle", db)
-        await _send_welcome_menu(phone)
-        return
-
-    # Obtener historial de chat
+async def _handle_llm_support(phone, message, conversation, db):
+    """Manejar consulta de soporte con LLM"""
     context = conversation.context or {}
     history = context.get("chat_history", [])
 
@@ -82,50 +143,18 @@ async def _handle_support(phone, message, conversation, db):
     # Actualizar historial
     history.append({"role": "user", "content": message})
     history.append({"role": "assistant", "content": response})
+    
     session.update_conversation_state(
-        conversation, "technical_support", db, {"chat_history": history[-6:]}
+        conversation, 
+        conversation.state, 
+        db, 
+        {
+            "chat_history": history[-6:],
+            "current_flow": context.get("current_flow", "support_lvl1")
+        }
     )
 
     await whatsapp.send_message(phone, response)
-
-
-async def _send_welcome_menu(phone):
-    """Enviar menú de bienvenida"""
-    business = business_config.get("business", {})
-    flow = flows_config.get("flows", {}).get("welcome", {})
-
-    text = flow.get("text", "Bienvenido").replace(
-        "{business_name}", business.get("name", "nuestra empresa")
-    )
-    buttons = flow.get("buttons", [])
-    header = flow.get("header", "Menú")
-
-    await whatsapp.send_menu(phone, text, buttons, header)
-
-
-async def _start_support(phone, db):
-    """Iniciar flujo de soporte técnico"""
-    conversation = session.get_or_create_conversation(phone, db)
-    session.update_conversation_state(conversation, "technical_support", db)
-
-    flow = flows_config.get("flows", {}).get("technical_support", {})
-    msg = flow.get("start_message", "🔧 *Soporte Técnico*\n\nPor favor, describa su problema.")
-
-    await whatsapp.send_message(phone, msg)
-
-
-async def _show_plans(phone):
-    """Mostrar planes disponibles"""
-    flow = flows_config.get("flows", {}).get("plans", {})
-    msg = flow.get("text", "Consulte nuestros planes disponibles.")
-    await whatsapp.send_message(phone, msg)
-
-
-async def _show_billing(phone):
-    """Mostrar información de facturación"""
-    flow = flows_config.get("flows", {}).get("billing", {})
-    msg = flow.get("text", "Información de facturación.")
-    await whatsapp.send_message(phone, msg)
 
 
 def _save_message(conversation, sender, content, external_id, db):
