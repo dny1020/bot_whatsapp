@@ -59,17 +59,12 @@ def get_logger(name):
 # =============================================================================
 
 def load_json_config(filename, default):
-    """Cargar archivo JSON de configuración"""
+    """Cargar archivo JSON de configuracion"""
     config_path = os.path.join(os.path.dirname(__file__), "..", "config", filename)
     
     if os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
-            content = f.read()
-            # Remover comentarios estilo /* */ y //
-            import re
-            content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
-            content = re.sub(r'//.*?$', '', content, flags=re.MULTILINE)
-            return json.loads(content)
+            return json.load(f)
     return default
 
 
