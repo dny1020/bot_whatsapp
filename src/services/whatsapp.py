@@ -1,87 +1,75 @@
 """
-WhatsApp Client Service (Twilio)
+Servicio de WhatsApp (Twilio)
 """
+
 import httpx
 from base64 import b64encode
-from typing import Dict, Any, List
 
-from ..settings import settings, get_logger
+from ..settings import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, get_logger
 
 logger = get_logger(__name__)
 
-MAX_WHATSAPP_MESSAGE_LENGTH = 1600
+MAX_MESSAGE_LENGTH = 1600
+
+# Configurar auth de Twilio
+_base_url = ""
+_headers = {}
+
+if TWILIO_ACCOUNT_SID:
+    _base_url = f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}"
+    auth_string = f"{TWILIO_ACCOUNT_SID}:{TWILIO_AUTH_TOKEN}"
+    _headers = {
+        "Authorization": f"Basic {b64encode(auth_string.encode()).decode()}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
 
 
-class WhatsAppClient:
-    """Twilio WhatsApp integration"""
+async def send_message(to, message):
+    """Enviar mensaje de texto por WhatsApp"""
+    if not to.startswith("whatsapp:"):
+        to = f"whatsapp:{to}"
+    
+    # Limpiar mensaje
+    message = "".join(c for c in message if c == '\n' or (ord(c) >= 32 and ord(c) != 127))
+    
+    # Truncar si es muy largo
+    if len(message) > MAX_MESSAGE_LENGTH:
+        message = message[:MAX_MESSAGE_LENGTH - 3] + "..."
+    
+    payload = {
+        "From": TWILIO_PHONE_NUMBER,
+        "To": to,
+        "Body": message,
+    }
 
-    def __init__(self):
-        self.base_url = ""
-        self.headers = {}
-
-        if settings.twilio_account_sid:
-            self.base_url = f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}"
-            auth_string = f"{settings.twilio_account_sid}:{settings.twilio_auth_token}"
-            self.headers = {
-                "Authorization": f"Basic {b64encode(auth_string.encode()).decode()}",
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-
-    async def send_text_message(self, to: str, message: str) -> Dict[str, Any]:
-        """Send text message via WhatsApp"""
-        to_number = to if to.startswith("whatsapp:") else f"whatsapp:{to}"
-        
-        # Sanitize message: remove null bytes and control characters (except newlines)
-        message = "".join(c for c in message if c == '\n' or (ord(c) >= 32 and ord(c) != 127))
-        
-        # Truncate if too long
-        if len(message) > MAX_WHATSAPP_MESSAGE_LENGTH:
-            message = message[:MAX_WHATSAPP_MESSAGE_LENGTH - 3] + "..."
-            logger.warning("message_truncated", original_length=len(message))
-        
-        payload = {
-            "From": settings.twilio_phone_number,
-            "To": to_number,
-            "Body": message,
-        }
-
+    try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/Messages.json",
+                f"{_base_url}/Messages.json",
                 data=payload,
-                headers=self.headers,
+                headers=_headers,
                 timeout=30.0,
             )
             
             result = response.json()
             
             if response.status_code >= 400:
-                logger.error(
-                    "twilio_send_error",
-                    status_code=response.status_code,
-                    error_code=result.get("code"),
-                    error_message=result.get("message"),
-                    to=to_number
-                )
+                logger.error(f"Error enviando mensaje: {result.get('message')}")
             
             return result
-
-    async def send_interactive_buttons(
-        self,
-        to: str,
-        body: str,
-        buttons: List[Dict[str, str]],
-        header: str | None = None,
-    ) -> Dict[str, Any]:
-        """Send interactive buttons (fallback to numbered text)"""
-        msg = f"*{header}*\n\n" if header else ""
-        msg += f"{body}\n\n"
-
-        for idx, btn in enumerate(buttons[:10], 1):
-            msg += f"{idx}. {btn.get('title')}\n"
-
-        msg += "\nResponda con el número de su opción."
-        return await self.send_text_message(to, msg)
+    except Exception as e:
+        logger.error(f"Error en WhatsApp: {e}")
+        return {"error": str(e)}
 
 
-whatsapp_client = WhatsAppClient()
+async def send_menu(to, body, buttons, header=None):
+    """Enviar menú con opciones numeradas"""
+    msg = f"*{header}*\n\n" if header else ""
+    msg += f"{body}\n\n"
+
+    for i, btn in enumerate(buttons[:10], 1):
+        msg += f"{i}. {btn.get('title')}\n"
+
+    msg += "\nResponda con el número de su opción."
+    
+    return await send_message(to, msg)

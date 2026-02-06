@@ -1,51 +1,76 @@
 """
-SQLAlchemy Database Models
+Modelos de base de datos y esquemas de respuesta
 """
 
-import enum
 from datetime import datetime
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Boolean,
-    DateTime,
-    Text,
-    JSON,
-    ForeignKey,
-    Enum,
-)
+from typing import Optional
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from pydantic import BaseModel
 
 Base = declarative_base()
 
 
-class ConversationStatus(str, enum.Enum):
-    active = "active"
-    idle = "idle"
-    closed = "closed"
-    archived = "archived"
+# =============================================================================
+# Esquemas Pydantic (para respuestas API)
+# =============================================================================
 
+class SupportTicketResponse(BaseModel):
+    ticket_id: str
+    issue_type: str
+    status: str
+    priority: str
+    subject: Optional[str] = None
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserResponse(BaseModel):
+    id: int
+    phone: str
+    name: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TicketStats(BaseModel):
+    total_tickets: int
+    open_tickets: int
+    in_progress_tickets: int
+    resolved_tickets: int
+    avg_resolution_time_hours: float
+
+
+class MessageAnalytics(BaseModel):
+    period_days: int
+    total_messages: int
+    inbound_messages: int
+    outbound_messages: int
+
+
+# =============================================================================
+# Modelos SQLAlchemy
+# =============================================================================
 
 class User(Base):
-    """User/Customer model"""
-
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     phone = Column(String(20), unique=True, index=True, nullable=False)
     name = Column(String(100))
-    nickname = Column(String(100))
     email = Column(String(100))
-
+    
     first_seen = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
     total_conversations = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    language = Column(String(10), default="es")
-    preferences = Column(JSON, default={})
-
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -54,28 +79,20 @@ class User(Base):
 
 
 class Conversation(Base):
-    """Chat conversation model"""
-
     __tablename__ = "conversations"
 
-    id = Column(String(100), primary_key=True, index=True)
+    id = Column(String(100), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     phone = Column(String(20), index=True, nullable=False)
-
-    status = Column(
-        Enum(ConversationStatus), default=ConversationStatus.active, index=True
-    )
+    
+    status = Column(String(20), default="active", index=True)
     state = Column(String(50), default="idle")
     context = Column(JSON, default={})
-
+    
     message_count = Column(Integer, default=0)
-    topic = Column(String(200))
-
     last_activity = Column(DateTime, default=datetime.utcnow)
     ttl_expires_at = Column(DateTime)
-    closed_at = Column(DateTime)
-    close_reason = Column(String(50))
-
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -84,48 +101,37 @@ class Conversation(Base):
 
 
 class Message(Base):
-    """Message log"""
-
     __tablename__ = "messages"
 
-    id = Column(String(100), primary_key=True, index=True)
-    conversation_id = Column(
-        String(100), ForeignKey("conversations.id"), nullable=False
-    )
-
-    sender = Column(String(20))  # 'user' or 'bot'
-    direction = Column(String(10))  # inbound, outbound
+    id = Column(String(100), primary_key=True)
+    conversation_id = Column(String(100), ForeignKey("conversations.id"), nullable=False)
+    
+    sender = Column(String(20))  # 'user' o 'bot'
+    direction = Column(String(10))  # 'inbound' o 'outbound'
     message_type = Column(String(20))
     content = Column(Text)
-
-    tokens_used = Column(Integer, default=0)
-    latency_ms = Column(Integer, default=0)
-
-    meta_data = Column(JSON, default={})
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
 
 
 class SupportTicket(Base):
-    """ISP Support Ticket model"""
-
     __tablename__ = "support_tickets"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     ticket_id = Column(String(50), unique=True, index=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
+    
     issue_type = Column(String(50))
     priority = Column(String(20), default="medium")
     subject = Column(String(200))
     description = Column(Text)
-
     status = Column(String(20), default="open")
-
+    
     resolution = Column(Text)
     resolved_at = Column(DateTime)
-
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

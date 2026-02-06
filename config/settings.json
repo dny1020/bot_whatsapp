@@ -4,18 +4,23 @@
     "description": "Soporte técnico y atención al cliente para tu servicio de internet",
     "phone": "+1234567890",
     "email": "soporte@ispproveedor.com",
-    "address": "Av. Tecnología 456"
+    "address": "Av. Tecnología 456",
+    "country": "CO",
+    "timezone": "America/Bogota"
   },
-  "payment_methods": [
-    {
-      "id": "card",
-      "name": "Tarjeta de Crédito/Débito",
-      "enabled": true
-    },
-    {
-      "id": "transfer",
-      "name": "Transferencia Bancaria",
-      "enabled": true
-    }
-  ]
+  "billing": {
+    "currency": "USD",
+    "payment_methods": [
+      {
+        "id": "card",
+        "name": "Tarjeta de Crédito/Débito",
+        "enabled": true
+      },
+      {
+        "id": "transfer",
+        "name": "Transferencia Bancaria",
+        "enabled": true
+      }
+    ]
+  }
 }

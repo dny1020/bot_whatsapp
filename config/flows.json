@@ -1,97 +1,129 @@
 {
-    "intents": {
-        "allowed": [
-            "greeting",
-            "support",
-            "hours",
-            "payment",
-            "help",
-            "thanks",
-            "farewell",
-            "complaint",
-            "affirmative",
-            "negative",
-            "plans",
-            "billing"
-        ],
-        "patterns": {
-            "greeting": [
-                "\\b(hola|buenos días|buenas tardes|buenas noches|hey|hi|hello|saludos)\\b"
-            ],
-            "support": [
-                "\\b(soporte|ayuda técnica|asistencia técnica|problema técnico|no funciona|no enciende|no prende|fallo|falla)\\b",
-                "\\b(internet|conexión|conexion|router|módem|modem|wifi|velocidad|luz roja|los roja)\\b",
-                "\\b(agua|mojó|mojo|caída|caida|lento|lentitud)\\b",
-                "^1$"
-            ],
-            "plans": [
-                "\\b(plan|planes|paquete|paquetes|fibra|megas|mb)\\b",
-                "^2$"
-            ],
-            "billing": [
-                "\\b(factura|pago|recibo|cuenta|deuda|saldo)\\b",
-                "^3$"
-            ],
-            "hours": [
-                "\\b(horario|hora|abierto|cerrado|atienden|atención)\\b"
-            ],
-            "payment": [
-                "\\b(pago|pagar|efectivo|tarjeta|transferencia)\\b"
-            ],
-            "help": [
-                "\\b(ayuda|help|asistencia|información|informacion)\\b"
-            ],
-            "thanks": [
-                "\\b(gracias|thank|agradezco)\\b"
-            ],
-            "farewell": [
-                "\\b(adiós|adios|chao|hasta luego|bye)\\b"
-            ],
-            "complaint": [
-                "\\b(queja|reclamo|malo|terrible|pésimo|pesimo)\\b"
-            ],
-            "affirmative": [
-                "\\b(sí|si|yes|ok|okay|vale|dale|perfecto|claro|correcto|confirmar)\\b"
-            ],
-            "negative": [
-                "^(no|nop|nope|nunca|jamás|jamas|negativo)$",
-                "\\b(cancelar|detener|parar)\\b"
-            ]
-        }
-    },
-    "flows": {
-        "welcome": {
-            "text": "Bienvenido al servicio de atención de *{business_name}* 🌐\n\n¿En qué podemos ayudarle el día de hoy?",
-            "header": "Menú de Inicio",
-            "buttons": [
-                {
-                    "id": "soporte",
-                    "title": "🔧 Soporte Técnico"
-                },
-                {
-                    "id": "planes",
-                    "title": "📡 Ver Planes"
-                },
-                {
-                    "id": "factura",
-                    "title": "💳 Facturación"
-                }
-            ]
-        },
-        "technical_support": {
-            "start_message": "🔧 *Centro de Soporte Técnico*\n\nPor favor, describa detalladamente el inconveniente que presenta (ej: 'No tengo servicio').",
-            "exit_commands": ["salir", "cancelar", "menu"]
-        },
-        "plans": {
-            "text": "📡 *Planes de Fibra Óptica*\n\n1. *Básico (100MB)* - $20/mes\n2. *Pro (300MB)* - $35/mes\n3. *Gamer (600MB)* - $50/mes"
-        },
-        "billing": {
-            "text": "💳 *Pagos*\n\nPuedes pagar vía App, Transferencia o Puntos autorizados."
-        }
-    },
-    "defaults": {
-        "fallback_support_message": "🔧 *Soporte Técnico*\n\nPor favor, describa su problema.",
-        "fallback_plans_message": "Consulte nuestros planes disponibles.",
-        "fallback_billing_message": "Información de facturación."
+  "intents": {
+    "allowed": [
+      "greeting",
+      "support",
+      "plans",
+      "billing",
+      "affirmative",
+      "negative",
+      "farewell"
+    ],
+    "patterns": {
+      "greeting": ["\\b(hola|buenos días|buenas tardes|buenas noches|hey|hi|hello)\\b"],
+      "support": ["^1$"],
+      "plans": ["^2$"],
+      "billing": ["^3$"],
+      "affirmative": ["\\b(sí|si|ok|vale|confirmar)\\b"],
+      "negative": ["\\b(no|cancelar|salir|menu)\\b"],
+      "farewell": ["\\b(adiós|bye|chao)\\b"]
     }
+  },
+
+  "flows": {
+    "welcome": {
+      "text": "Bienvenido a *{business_name}* 🌐\nSeleccione una opción:",
+      "header": "Menú Principal",
+      "buttons": [
+        { "id": "support_lvl1", "title": "🔧 Soporte Técnico" },
+        { "id": "plans_lvl1", "title": "📡 Planes" },
+        { "id": "billing_lvl1", "title": "💳 Facturación" }
+      ]
+    },
+
+    /* ===================== SOPORTE (4 niveles) ===================== */
+
+    "support_lvl1": {
+      "text": "🔧 *Soporte Técnico*\n¿Qué tipo de problema tiene?",
+      "buttons": [
+        { "id": "support_lvl2_conn", "title": "🌐 Conectividad" },
+        { "id": "support_lvl2_hw", "title": "📟 Equipo / Router" },
+        { "id": "support_lvl2_other", "title": "❓ Otro" }
+      ]
+    },
+
+    "support_lvl2_conn": {
+      "text": "🌐 *Conectividad*\nSeleccione el síntoma:",
+      "buttons": [
+        { "id": "support_lvl3_no_service", "title": "🚫 Sin servicio" },
+        { "id": "support_lvl3_slow", "title": "🐢 Lento" }
+      ]
+    },
+
+    "support_lvl3_no_service": {
+      "text": "🚫 *Sin servicio*\n¿Desde cuándo ocurre?",
+      "buttons": [
+        { "id": "support_lvl4_recent", "title": "⏱ Hace poco" },
+        { "id": "support_lvl4_days", "title": "📅 Varios días" }
+      ]
+    },
+
+    "support_lvl4_recent": {
+      "text": "Gracias. Un técnico revisará su caso. ⏳\n¿Desea crear ticket?"
+    },
+
+    /* ===================== PLANES (4 niveles) ===================== */
+
+    "plans_lvl1": {
+      "text": "📡 *Planes Disponibles*\nSeleccione tipo:",
+      "buttons": [
+        { "id": "plans_lvl2_home", "title": "🏠 Hogar" },
+        { "id": "plans_lvl2_business", "title": "🏢 Empresa" }
+      ]
+    },
+
+    "plans_lvl2_home": {
+      "text": "🏠 *Planes Hogar*",
+      "buttons": [
+        { "id": "plans_lvl3_basic", "title": "100 MB" },
+        { "id": "plans_lvl3_pro", "title": "300 MB" }
+      ]
+    },
+
+    "plans_lvl3_basic": {
+      "text": "100 MB Fibra\n$20/mes\n¿Desea más detalles?",
+      "buttons": [
+        { "id": "plans_lvl4_contract", "title": "📄 Contrato" },
+        { "id": "plans_lvl4_install", "title": "🛠 Instalación" }
+      ]
+    },
+
+    "plans_lvl4_contract": {
+      "text": "Contrato mínimo 6 meses. Sin letra chica."
+    },
+
+    /* ===================== FACTURACIÓN (4 niveles) ===================== */
+
+    "billing_lvl1": {
+      "text": "💳 *Facturación*\nSeleccione opción:",
+      "buttons": [
+        { "id": "billing_lvl2_pay", "title": "💰 Pagar" },
+        { "id": "billing_lvl2_invoice", "title": "📄 Ver factura" }
+      ]
+    },
+
+    "billing_lvl2_pay": {
+      "text": "💰 *Método de Pago*",
+      "buttons": [
+        { "id": "billing_lvl3_transfer", "title": "🏦 Transferencia" },
+        { "id": "billing_lvl3_card", "title": "💳 Tarjeta" }
+      ]
+    },
+
+    "billing_lvl3_transfer": {
+      "text": "🏦 Transferencia\n¿Desea datos bancarios?",
+      "buttons": [
+        { "id": "billing_lvl4_yes", "title": "✅ Sí" },
+        { "id": "billing_lvl4_no", "title": "❌ No" }
+      ]
+    },
+
+    "billing_lvl4_yes": {
+      "text": "Banco XYZ\nCuenta: 123456789\nTitular: {business_name}"
+    }
+  },
+
+  "defaults": {
+    "fallback": "No entendí. Escriba *menu* para volver al inicio."
+  }
 }

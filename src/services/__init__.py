@@ -1,17 +1,8 @@
 """
-Services Package
+Módulo de servicios
 """
 
-from .whatsapp import whatsapp_client
-from .session import session_service
-from .nlp import nlp_service
-from .rag import rag_service
-from .llm import llm_service
-
-__all__ = [
-    "whatsapp_client",
-    "session_service",
-    "nlp_service",
-    "rag_service",
-    "llm_service",
-]
+from . import whatsapp
+from . import session
+from . import llm
+from . import rag

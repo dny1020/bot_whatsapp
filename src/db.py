@@ -1,28 +1,31 @@
 """
-Database Engine and Session Management
+Conexión a base de datos SQLite
 """
 
-from contextlib import contextmanager
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
+import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from .settings import settings, get_logger
+from .settings import DATABASE_URL, DEBUG, get_logger
 
 logger = get_logger(__name__)
 
+# Crear directorio data si no existe
+os.makedirs("./data", exist_ok=True)
+
+# Crear engine de SQLite
 engine = create_engine(
-    settings.database_url,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-    echo=settings.debug,
+    DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    echo=DEBUG,
 )
 
+# Crear sesión
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def get_db() -> Session:
-    """FastAPI dependency for database session"""
+def get_db():
+    """Obtener sesión de base de datos para FastAPI"""
     db = SessionLocal()
     try:
         yield db
@@ -30,39 +33,17 @@ def get_db() -> Session:
         db.close()
 
 
-@contextmanager
-def get_db_context():
-    """Context manager for database session with auto-commit"""
-    db = SessionLocal()
-    try:
-        yield db
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        logger.error("database_error", error=str(e))
-        raise
-    finally:
-        db.close()
+def get_db_session():
+    """Obtener sesión de base de datos (uso manual)"""
+    return SessionLocal()
 
 
-def init_db() -> None:
-    """Initialize database tables"""
+def init_db():
+    """Inicializar tablas de la base de datos"""
     from .models import Base
-
+    
     try:
-        with engine.connect() as conn:
-            conn.execute(
-                text("""
-                DO $$ BEGIN
-                    CREATE TYPE conversationstatus AS ENUM ('active', 'idle', 'closed', 'archived');
-                EXCEPTION
-                    WHEN duplicate_object THEN null;
-                END $$;
-            """)
-            )
-            conn.commit()
-
         Base.metadata.create_all(bind=engine, checkfirst=True)
-        logger.info("database_initialized")
+        logger.info(f"Base de datos inicializada: {DATABASE_URL}")
     except Exception as e:
-        logger.error("database_init_error", error=str(e))
+        logger.error(f"Error inicializando base de datos: {e}")

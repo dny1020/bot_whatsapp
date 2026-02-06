@@ -1,114 +1,118 @@
 """
-Application Settings and Configuration Loaders
+Configuración de la aplicación
 """
 
+import os
+import re
 import json
 import logging
-import structlog
-from pathlib import Path
-from typing import Any, Dict, Optional
-from pydantic_settings import BaseSettings
-from pydantic import Field
+import hashlib
+from datetime import datetime
+
+# Cargar variables de entorno desde .env si existe
+from dotenv import load_dotenv
+load_dotenv()
 
 
-class Settings(BaseSettings):
-    """Application settings from environment variables"""
+# =============================================================================
+# Configuración
+# =============================================================================
 
-    # Twilio WhatsApp
-    twilio_account_sid: str = Field(default="", alias="TWILIO_ACCOUNT_SID")
-    twilio_auth_token: str = Field(default="", alias="TWILIO_AUTH_TOKEN")
-    twilio_phone_number: str = Field(default="", alias="TWILIO_PHONE_NUMBER")
+# Twilio
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER", "")
 
-    # Application
-    env: str = Field(default="development", alias="ENV")
-    debug: bool = Field(default=False, alias="DEBUG")
-    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    secret_key: str = Field(default="change-me-in-production", alias="SECRET_KEY")
+# App
+ENV = os.getenv("ENV", "development")
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-    # Database
-    database_url: str = Field(
-        default="postgresql://chatbot:chatbot_password@localhost:5432/chatbot_db",
-        alias="DATABASE_URL",
-    )
+# Database
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/chatbot.db")
 
-    # API
-    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
-    api_port: int = Field(default=8000, alias="API_PORT")
+# API
+API_HOST = os.getenv("API_HOST", "0.0.0.0")
+API_PORT = int(os.getenv("API_PORT", "8000"))
 
-    # LLM
-    groq_api_key: Optional[str] = Field(default=None, alias="GROQ_API_KEY")
-    groq_model: str = Field(default="llama-3.3-70b-versatile", alias="GROQ_MODEL")
-
-    # Features
-    enable_rag: bool = Field(default=True, alias="ENABLE_RAG")
-
-    # Security
-    allowed_origins: str = Field(default="*", alias="ALLOWED_ORIGINS")
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        populate_by_name = True
-        extra = "allow"
+# LLM
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 
-settings = Settings()
+# =============================================================================
+# Logging simple
+# =============================================================================
+
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+def get_logger(name):
+    """Obtener logger"""
+    return logging.getLogger(name)
 
 
-def _get_config_path(filename: str) -> Path:
-    """Get path to config file"""
-    return Path(__file__).parent.parent / "config" / filename
+# =============================================================================
+# Cargar configuración JSON
+# =============================================================================
 
-
-def load_json_config(filename: str, default: Dict[str, Any]) -> Dict[str, Any]:
-    """Load JSON configuration file with fallback"""
-    config_path = _get_config_path(filename)
-    if config_path.exists():
+def load_json_config(filename, default):
+    """Cargar archivo JSON de configuración"""
+    config_path = os.path.join(os.path.dirname(__file__), "..", "config", filename)
+    
+    if os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            content = f.read()
+            # Remover comentarios estilo /* */ y //
+            import re
+            content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
+            content = re.sub(r'//.*?$', '', content, flags=re.MULTILINE)
+            return json.loads(content)
     return default
 
 
-business_config = load_json_config(
-    "settings.json",
-    {
-        "business": {"name": "ISP Support Bot", "description": "Asistente virtual"},
-        "support": {"hours": "24/7", "contact_phone": "+1234567890"},
-    },
-)
+business_config = load_json_config("settings.json", {
+    "business": {"name": "ISP Support Bot", "description": "Asistente virtual"},
+    "support": {"hours": "24/7", "contact_phone": "+1234567890"},
+})
 
-flows_config = load_json_config(
-    "flows.json",
-    {"intents": {"allowed": [], "patterns": {}}, "flows": {}, "defaults": {}},
-)
+flows_config = load_json_config("flows.json", {
+    "intents": {"allowed": [], "patterns": {}},
+    "flows": {},
+    "defaults": {}
+})
 
 
-def setup_logging() -> None:
-    """Configure structured logging"""
-    logging.basicConfig(
-        level=getattr(logging, settings.log_level),
-        format="%(message)s",
-        handlers=[logging.StreamHandler()],
-    )
+# =============================================================================
+# Funciones utilitarias
+# =============================================================================
 
-    structlog.configure(
-        processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.processors.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer(),
-        ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            getattr(logging, settings.log_level)
-        ),
-        context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
+def normalize_phone(phone):
+    """Normalizar número de teléfono (solo dígitos)"""
+    return re.sub(r"\D", "", phone)
 
 
-def get_logger(name: str):
-    """Get a structured logger"""
-    return structlog.get_logger(name)
+def validate_phone(phone):
+    """Validar que el teléfono tenga al menos 10 dígitos"""
+    return len(normalize_phone(phone)) >= 10
+
+
+def format_currency(amount):
+    """Formatear cantidad como moneda"""
+    return f"${amount:.2f}"
+
+
+def generate_ticket_id():
+    """Generar ID único de ticket"""
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    hash_part = hashlib.md5(timestamp.encode()).hexdigest()[:6].upper()
+    return f"TICKET-{timestamp}-{hash_part}"
+
+
+def sanitize_input(text):
+    """Limpiar input del usuario"""
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"[<>{}]", "", text)
+    return text

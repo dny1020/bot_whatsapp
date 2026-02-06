@@ -1,59 +1,11 @@
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: chatbot_postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-chatbot}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbot_password}
-      POSTGRES_DB: ${POSTGRES_DB:-chatbot_db}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatbot -d chatbot_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - chatbot_network
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.25'
-
   app:
-    image: ${DOCKER_IMAGE:-ghcr.io/dny1020/bot_whatsapp/backend:${IMAGE_TAG:-main}}
-    container_name: chatbot_app
-    pull_policy: always
+    build: .
+    container_name: whatsapp_bot
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8000:8000"
     env_file:
       - .env
-    environment:
-      WEB_CONCURRENCY: 1
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health', timeout=5)"]
-      interval: 30s
-      timeout: 10s
-      start_period: 10s
-      retries: 3
     volumes:
-      - ./data/vector_store:/app/data/vector_store
+      - ./data:/app/data
     restart: unless-stopped
-    networks:
-      - chatbot_network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-
-networks:
-  chatbot_network:
-    driver: bridge

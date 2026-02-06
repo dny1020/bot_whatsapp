@@ -1,20 +1,18 @@
 """
-LLM Service - Groq Integration
+Servicio de LLM (Groq) y NLP
 """
 
+import re
 import httpx
-from typing import List, Dict
 
-from ..settings import settings, get_logger
-from .rag import rag_service
+from ..settings import GROQ_API_KEY, GROQ_MODEL, flows_config, get_logger
 
 logger = get_logger(__name__)
 
+# Cargar patrones de intents
+_intent_patterns = flows_config.get("intents", {}).get("patterns", {})
 
-class LLMService:
-    """LLM service using Groq API with RAG context"""
-
-    SYSTEM_PROMPT_TEMPLATE = """Eres el Asistente Virtual de soporte técnico para un ISP.
+SYSTEM_PROMPT = """Eres el Asistente Virtual de soporte técnico para un ISP.
 Responde de forma profesional, cortés y CONCISA (máximo 3-4 oraciones por respuesta).
 
 CONTEXTO:
@@ -26,63 +24,64 @@ REGLAS:
 - SÉ BREVE: respuestas cortas y directas.
 - NO menciones procedimientos internos ni prometas tiempos exactos."""
 
-    def __init__(self):
-        self.api_key = settings.groq_api_key
-        self.model = settings.groq_model
-        self.api_url = "https://api.groq.com/openai/v1/chat/completions"
 
-    async def get_response(
-        self, query: str, chat_history: List[Dict[str, str]] | None = None
-    ) -> str:
-        """Get LLM response with RAG context"""
-        if not self.api_key:
-            return "Lo siento, el servicio de IA no está configurado actualmente."
+def classify_intent(message):
+    """Clasificar intención del mensaje usando patrones regex"""
+    msg = message.lower().strip()
 
-        # Retrieve context
-        context = rag_service.get_context_for_llm(query, k=3)
-        logger.info(
-            "rag_context_retrieved", query=query[:50], has_context=bool(context)
-        )
+    for intent, patterns in _intent_patterns.items():
+        for pattern in patterns:
+            if re.search(pattern, msg):
+                return intent
 
-        # Build messages
-        system_prompt = self.SYSTEM_PROMPT_TEMPLATE.format(context=context)
-        messages = [{"role": "system", "content": system_prompt}]
-
-        if chat_history:
-            messages.extend(chat_history[-4:])
-
-        messages.append({"role": "user", "content": query})
-
-        # Call LLM
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    self.api_url,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": self.model,
-                        "messages": messages,
-                        "temperature": 0.5,
-                        "max_tokens": 350,
-                    },
-                    timeout=30.0,
-                )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    answer = data["choices"][0]["message"]["content"]
-                    logger.info("llm_response_generated", query=query[:50])
-                    return answer
-                else:
-                    logger.error("groq_api_error", status_code=response.status_code)
-                    return "Lo siento, tuve un problema al procesar su solicitud."
-
-        except Exception as e:
-            logger.error("llm_service_error", error=str(e))
-            return "Lo siento, ocurrió un error técnico. Por favor intente de nuevo."
+    return "unknown"
 
 
-llm_service = LLMService()
+async def get_llm_response(query, chat_history=None):
+    """Obtener respuesta del LLM con contexto RAG"""
+    if not GROQ_API_KEY:
+        return "Lo siento, el servicio de IA no está configurado."
+
+    # Importar RAG aquí para evitar import circular
+    from .rag import get_context_for_query
+    
+    # Obtener contexto
+    context = get_context_for_query(query)
+    
+    # Construir mensajes
+    system_prompt = SYSTEM_PROMPT.format(context=context)
+    messages = [{"role": "system", "content": system_prompt}]
+
+    if chat_history:
+        messages.extend(chat_history[-4:])
+
+    messages.append({"role": "user", "content": query})
+
+    # Llamar a Groq
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": GROQ_MODEL,
+                    "messages": messages,
+                    "temperature": 0.5,
+                    "max_tokens": 350,
+                },
+                timeout=30.0,
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                return data["choices"][0]["message"]["content"]
+            else:
+                logger.error(f"Error de Groq API: {response.status_code}")
+                return "Lo siento, tuve un problema al procesar su solicitud."
+
+    except Exception as e:
+        logger.error(f"Error en LLM: {e}")
+        return "Lo siento, ocurrió un error técnico. Por favor intente de nuevo."

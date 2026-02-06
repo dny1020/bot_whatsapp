@@ -1,22 +1,14 @@
-# ===================================
-# VERSIÓN OPTIMIZADA - GROQ + BM25 RAG + TWILIO (via httpx)
-# ===================================
 
 # Core Web Framework
 fastapi==0.109.2
 uvicorn[standard]==0.27.1
 pydantic>=2.6.0
-pydantic-settings>=2.6.0
 python-dotenv==1.0.0
 httpx==0.26.0
 python-multipart==0.0.9
 
 # Database
 sqlalchemy==2.0.46
-psycopg2-binary==2.9.9
-
-# Logging
-structlog==24.1.0
 
 # RAG & Document Processing
 langchain-community==0.3.14
