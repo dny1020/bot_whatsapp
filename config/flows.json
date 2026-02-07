@@ -11,7 +11,7 @@
     ],
     "patterns": {
       "greeting": [
-        "\\b(hola|buenos días|buenas tardes|buenas noches|hey|hi|hello)\\b"
+        "\\b(hola|buenos dias|buenas tardes|buenas noches|hey|hi|hello)\\b"
       ],
       "support": [
         "^1$"
@@ -23,13 +23,13 @@
         "^3$"
       ],
       "affirmative": [
-        "\\b(sí|si|ok|vale|confirmar)\\b"
+        "\\b(si|ok|vale|confirmar)\\b"
       ],
       "negative": [
         "\\b(no|cancelar|salir|menu)\\b"
       ],
       "farewell": [
-        "\\b(adiós|bye|chao)\\b"
+        "\\b(adios|bye|chao)\\b"
       ]
     }
   },
@@ -40,15 +40,15 @@
       "buttons": [
         {
           "id": "support_lvl1",
-          "title": "1. Soporte Tecnico"
+          "title": "🧑‍💻 Soporte Tecnico"
         },
         {
           "id": "plans_lvl1",
-          "title": "2. Planes"
+          "title": "🧰 Planes"
         },
         {
           "id": "billing_lvl1",
-          "title": "3. Facturacion"
+          "title": "💳 Facturacion"
         }
       ]
     },
@@ -57,15 +57,15 @@
       "buttons": [
         {
           "id": "support_lvl2_conn",
-          "title": "1. Conectividad"
+          "title": "🌐 Conectividad"
         },
         {
           "id": "support_lvl2_hw",
-          "title": "2. Equipo/Router"
+          "title": "📡 Equipo/Router"
         },
         {
           "id": "support_lvl2_other",
-          "title": "3. Otro"
+          "title": "Otro problema"
         }
       ]
     },
@@ -74,11 +74,11 @@
       "buttons": [
         {
           "id": "support_lvl3_no_service",
-          "title": "1. Sin servicio"
+          "title": "Sin servicio"
         },
         {
           "id": "support_lvl3_slow",
-          "title": "2. Lento"
+          "title": "Internet lento"
         }
       ]
     },
@@ -87,27 +87,27 @@
       "buttons": [
         {
           "id": "support_lvl3_no_lights",
-          "title": "1. Sin luces"
+          "title": "Sin luces"
         },
         {
           "id": "support_lvl3_restart",
-          "title": "2. Se reinicia solo"
+          "title": "Se reinicia solo"
         }
       ]
     },
     "support_lvl2_other": {
-      "text": "Describa su problema y un agente le ayudara."
+      "text": "Describa su problema y un agente le ayudara. Escriba *menu* para volver."
     },
     "support_lvl3_no_service": {
       "text": "Sin servicio - Desde cuando ocurre?",
       "buttons": [
         {
           "id": "support_lvl4_recent",
-          "title": "1. Hace poco"
+          "title": "Hace poco"
         },
         {
           "id": "support_lvl4_days",
-          "title": "2. Varios dias"
+          "title": "Varios dias"
         }
       ]
     },
@@ -116,11 +116,11 @@
       "buttons": [
         {
           "id": "support_lvl4_always",
-          "title": "1. Siempre"
+          "title": "Siempre lento"
         },
         {
           "id": "support_lvl4_peak",
-          "title": "2. Horas pico"
+          "title": "Solo en horas pico"
         }
       ]
     },
@@ -129,11 +129,11 @@
       "buttons": [
         {
           "id": "support_lvl4_yes_ticket",
-          "title": "1. Si, sin luces"
+          "title": "Si, sigue sin luces"
         },
         {
           "id": "support_lvl4_fixed",
-          "title": "2. Ya funciona"
+          "title": "Ya funciona"
         }
       ]
     },
@@ -142,45 +142,45 @@
       "buttons": [
         {
           "id": "support_lvl4_yes_ticket",
-          "title": "1. Crear ticket"
+          "title": "Crear ticket"
         },
         {
           "id": "support_lvl4_no_ticket",
-          "title": "2. No por ahora"
+          "title": "No por ahora"
         }
       ]
     },
     "support_lvl4_recent": {
-      "text": "Puede ser falla temporal. Reinicie su router y espere 5 min. Escriba menu para volver."
+      "text": "Puede ser falla temporal. Reinicie su router y espere 5 min. Escriba *menu* para volver."
     },
     "support_lvl4_days": {
-      "text": "Lamentamos la inconveniencia. Un tecnico se comunicara en 24h."
+      "text": "Lamentamos la inconveniencia. Un tecnico se comunicara en 24h. Escriba *menu* para volver."
     },
     "support_lvl4_always": {
-      "text": "Haremos diagnostico remoto. Un tecnico revisara su caso."
+      "text": "Haremos diagnostico remoto. Un tecnico revisara su caso. Escriba *menu* para volver."
     },
     "support_lvl4_peak": {
-      "text": "Puede ser congestion de red. Monitoreamos su zona."
+      "text": "Puede ser congestion de red. Monitoreamos su zona. Escriba *menu* para volver."
     },
     "support_lvl4_yes_ticket": {
-      "text": "Ticket creado. Un tecnico se comunicara pronto. Escriba menu para volver."
+      "text": "Ticket creado. Un tecnico se comunicara pronto. Escriba *menu* para volver."
     },
     "support_lvl4_fixed": {
-      "text": "Excelente! Nos alegra que se resolvio. Escriba menu si necesita mas."
+      "text": "Excelente! Nos alegra que se resolvio. Escriba *menu* si necesita mas ayuda."
     },
     "support_lvl4_no_ticket": {
-      "text": "Entendido. Si persiste, estamos aqui. Escriba menu para volver."
+      "text": "Entendido. Si persiste, estamos aqui. Escriba *menu* para volver."
     },
     "plans_lvl1": {
       "text": "Planes Disponibles - Seleccione tipo:",
       "buttons": [
         {
           "id": "plans_lvl2_home",
-          "title": "1. Hogar"
+          "title": "Hogar"
         },
         {
           "id": "plans_lvl2_business",
-          "title": "2. Empresa"
+          "title": "Empresa"
         }
       ]
     },
@@ -189,11 +189,11 @@
       "buttons": [
         {
           "id": "plans_lvl3_basic",
-          "title": "1. 100 MB - $20"
+          "title": "100 MB - $20/mes"
         },
         {
           "id": "plans_lvl3_pro",
-          "title": "2. 300 MB - $35"
+          "title": "300 MB - $35/mes"
         }
       ]
     },
@@ -202,85 +202,85 @@
       "buttons": [
         {
           "id": "plans_lvl3_biz_basic",
-          "title": "1. 200 MB - $50"
+          "title": "200 MB - $50/mes"
         },
         {
           "id": "plans_lvl3_biz_pro",
-          "title": "2. 500 MB - $80"
+          "title": "500 MB - $80/mes"
         }
       ]
     },
     "plans_lvl3_basic": {
-      "text": "100 MB Fibra - $20/mes. Ideal 1-3 dispositivos, Streaming HD",
+      "text": "Plan 100 MB Fibra - $20/mes\nIdeal para 1-3 dispositivos\nStreaming HD incluido",
       "buttons": [
         {
           "id": "plans_lvl4_contract",
-          "title": "1. Ver contrato"
+          "title": "Ver contrato"
         },
         {
           "id": "plans_lvl4_install",
-          "title": "2. Agendar instalacion"
+          "title": "Agendar instalacion"
         }
       ]
     },
     "plans_lvl3_pro": {
-      "text": "300 MB Fibra - $35/mes. 5+ dispositivos, Streaming 4K, Gaming",
+      "text": "Plan 300 MB Fibra - $35/mes\nPara 5+ dispositivos\nStreaming 4K y Gaming",
       "buttons": [
         {
           "id": "plans_lvl4_contract",
-          "title": "1. Ver contrato"
+          "title": "Ver contrato"
         },
         {
           "id": "plans_lvl4_install",
-          "title": "2. Agendar instalacion"
+          "title": "Agendar instalacion"
         }
       ]
     },
     "plans_lvl3_biz_basic": {
-      "text": "200 MB Empresa - $50/mes. IP Fija, Soporte prioritario",
+      "text": "Plan Empresa 200 MB - $50/mes\nIP Fija incluida\nSoporte prioritario",
       "buttons": [
         {
           "id": "plans_lvl4_contract",
-          "title": "1. Ver contrato"
+          "title": "Ver contrato"
         },
         {
           "id": "plans_lvl4_sales",
-          "title": "2. Contactar ventas"
+          "title": "Contactar ventas"
         }
       ]
     },
     "plans_lvl3_biz_pro": {
-      "text": "500 MB Empresa - $80/mes. IP Fija, Soporte 24/7, SLA 99.9%",
+      "text": "Plan Empresa 500 MB - $80/mes\nIP Fija + Soporte 24/7\nSLA 99.9%",
       "buttons": [
         {
           "id": "plans_lvl4_contract",
-          "title": "1. Ver contrato"
+          "title": "Ver contrato"
         },
         {
           "id": "plans_lvl4_sales",
-          "title": "2. Contactar ventas"
+          "title": "Contactar ventas"
         }
       ]
     },
     "plans_lvl4_contract": {
-      "text": "Contrato: Permanencia 6 meses, sin clausulas ocultas. Escriba menu para volver."
+      "text": "Contrato estandar: Permanencia minima 6 meses, sin clausulas ocultas. Escriba *menu* para volver."
     },
     "plans_lvl4_install": {
-      "text": "Un asesor se comunicara en 24h para agendar. Escriba menu para volver."
+      "text": "Un asesor se comunicara en las proximas 24h para agendar. Escriba *menu* para volver."
     },
     "plans_lvl4_sales": {
-      "text": "Un ejecutivo de cuenta se comunicara. Escriba menu para volver."
+      "text": "Un ejecutivo de cuenta se comunicara pronto. Escriba *menu* para volver."
     },
     "billing_lvl1": {
       "text": "Facturacion - Seleccione opcion:",
       "buttons": [
         {
           "id": "billing_lvl2_pay",
-          "title": "1. Pagar"
+          "title": "Pagar factura"
         },
         {
           "id": "billing_lvl2_invoice",
-          "title": "2. Ver factura"
+          "title": "Ver mi factura"
         }
       ]
     },
@@ -289,54 +289,54 @@
       "buttons": [
         {
           "id": "billing_lvl3_transfer",
-          "title": "1. Transferencia"
+          "title": "Transferencia bancaria"
         },
         {
           "id": "billing_lvl3_card",
-          "title": "2. Tarjeta"
+          "title": "Tarjeta de credito"
         }
       ]
     },
     "billing_lvl2_invoice": {
-      "text": "Factura - Saldo: $35.00, Vencimiento: 15 de este mes",
+      "text": "Su Factura Actual:\nSaldo: $35.00\nVencimiento: 15 de este mes",
       "buttons": [
         {
           "id": "billing_lvl2_pay",
-          "title": "1. Pagar ahora"
+          "title": "Pagar ahora"
         },
         {
           "id": "billing_lvl3_history",
-          "title": "2. Historial"
+          "title": "Ver historial"
         }
       ]
     },
     "billing_lvl3_transfer": {
-      "text": "Transferencia Bancaria - Desea ver los datos bancarios?",
+      "text": "Transferencia Bancaria - Desea ver los datos?",
       "buttons": [
         {
           "id": "billing_lvl4_yes",
-          "title": "1. Ver datos"
+          "title": "Si, ver datos"
         },
         {
           "id": "billing_lvl4_no",
-          "title": "2. No"
+          "title": "No, gracias"
         }
       ]
     },
     "billing_lvl3_card": {
-      "text": "Pague en: https://pagos.ejemplo.com - Escriba menu para volver."
+      "text": "Pague con tarjeta en: https://pagos.ejemplo.com\n\nEscriba *menu* para volver."
     },
     "billing_lvl3_history": {
-      "text": "Historial: Ene $35, Dic $35, Nov $35 - Escriba menu para volver."
+      "text": "Historial de pagos:\n- Enero: $35\n- Diciembre: $35\n- Noviembre: $35\n\nEscriba *menu* para volver."
     },
     "billing_lvl4_yes": {
-      "text": "Banco: XYZ, Cuenta: 123456789, Titular: {business_name} - Escriba menu para volver."
+      "text": "Datos bancarios:\nBanco: XYZ\nCuenta: 123456789\nTitular: {business_name}\n\nEscriba *menu* para volver."
     },
     "billing_lvl4_no": {
-      "text": "Entendido. Escriba menu si necesita algo mas."
+      "text": "Entendido. Escriba *menu* si necesita algo mas."
     }
   },
   "defaults": {
-    "fallback": "No entendi. Escriba menu para volver al inicio."
+    "fallback": "No entendi su respuesta. Por favor seleccione una opcion del menu o escriba *menu* para volver al inicio."
   }
 }

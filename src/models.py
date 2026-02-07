@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import relationship
 from pydantic import BaseModel
 
@@ -87,7 +88,7 @@ class Conversation(Base):
     
     status = Column(String(20), default="active", index=True)
     state = Column(String(50), default="idle")
-    context = Column(JSON, default={})
+    context = Column(MutableDict.as_mutable(JSON), default={})
     
     message_count = Column(Integer, default=0)
     last_activity = Column(DateTime, default=datetime.utcnow)

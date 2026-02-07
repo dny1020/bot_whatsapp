@@ -82,12 +82,13 @@ def get_or_create_conversation(phone, db):
 
 
 def update_conversation_state(conversation, state, db, context=None):
-    """Actualizar estado de la conversación"""
+    """Actualizar estado de la conversacion"""
     conversation.state = state
 
     if context:
-        current_context = conversation.context or {}
+        current_context = dict(conversation.context or {})
         current_context.update(context)
         conversation.context = current_context
 
     db.commit()
+    db.refresh(conversation)

@@ -63,13 +63,16 @@ async def send_message(to, message):
 
 
 async def send_menu(to, body, buttons, header=None):
-    """Enviar menú con opciones numeradas"""
-    msg = f"*{header}*\n\n" if header else ""
+    """Enviar menu con opciones numeradas"""
+    msg = ""
+    if header:
+        msg = f"*{header}*\n\n"
     msg += f"{body}\n\n"
 
     for i, btn in enumerate(buttons[:10], 1):
-        msg += f"{i}. {btn.get('title')}\n"
+        title = btn.get("title", "")
+        msg += f"*{i}.* {title}\n"
 
-    msg += "\nResponda con el número de su opción."
+    msg += "\n_Responda con el numero de su opcion_"
     
     return await send_message(to, msg)

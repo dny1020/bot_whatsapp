@@ -54,5 +54,6 @@ docker-compose.override.yml
 README.old.md
 
 output_server.txt
-
+conversations.txt
 deploy.sh
+mejoras.txt
