@@ -1,6 +1,7 @@
 services:
   app:
     build: .
+    image: bot-whatsapp-pro
     container_name: whatsapp_bot
     ports:
       - "8000:8000"
@@ -14,7 +15,12 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
+      interval: 50s
+      timeout: 20s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
