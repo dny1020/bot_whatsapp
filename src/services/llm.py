@@ -5,24 +5,26 @@ Servicio de LLM (Groq) y NLP
 import re
 import httpx
 
-from ..settings import GROQ_API_KEY, GROQ_MODEL, flows_config, get_logger
+from ..settings import GROQ_API_KEY, GROQ_MODEL, business_config, flows_config, get_logger
 
 logger = get_logger(__name__)
 
 # Cargar patrones de intents
 _intent_patterns = flows_config.get("intents", {}).get("patterns", {})
 
-SYSTEM_PROMPT = """Eres el Asistente Virtual de soporte técnico para un ISP.
-Responde de forma profesional, cortés y CONCISA (máximo 3-4 oraciones por respuesta).
-
-CONTEXTO:
-{context}
-
-REGLAS:
-- Responde SOLO basado en el contexto. Si no hay info, ofrece transferir a un agente.
-- Usa español profesional y pasos numerados cuando sea necesario.
-- SÉ BREVE: respuestas cortas y directas.
-- NO menciones procedimientos internos ni prometas tiempos exactos."""
+# System prompt configurable desde settings.json
+_business_name = business_config.get("business", {}).get("name", "Soporte")
+_default_prompt = (
+    "Eres un Asistente Virtual. Responde de forma profesional y concisa.\n"
+    "CONTEXTO:\n{context}\n"
+    "REGLAS:\n- Responde SOLO basado en el contexto.\n- Sé breve y directo."
+)
+SYSTEM_PROMPT = (
+    business_config
+    .get("bot", {})
+    .get("system_prompt", _default_prompt)
+    .replace("{business_name}", _business_name)
+)
 
 
 def classify_intent(message):

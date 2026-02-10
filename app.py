@@ -3,10 +3,10 @@ WhatsApp Bot - Aplicación principal
 """
 
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI, Request, Response, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 
 from src.settings import ENV, API_PORT, get_logger
 from src.db import init_db, get_db_session
@@ -15,32 +15,25 @@ from src.routes import router as api_router
 
 logger = get_logger(__name__)
 
-# Crear app
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Ciclo de vida de la aplicación"""
+    logger.info(f"Iniciando aplicación en modo {ENV}")
+    init_db()
+    logger.info("Aplicación lista")
+    yield
+    logger.info("Aplicación detenida")
+
+
 app = FastAPI(
     title="WhatsApp Bot",
-    description="Bot de WhatsApp para soporte ISP",
-    version="3.0.0",
-)
-
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    description="Bot de WhatsApp para soporte ISP 📶",
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Rutas API
 app.include_router(api_router, prefix="/api/v1", tags=["API"])
-
-
-@app.on_event("startup")
-async def startup():
-    """Inicializar aplicación"""
-    logger.info(f"Iniciando aplicación en modo {ENV}")
-    init_db()
-    logger.info("Aplicación lista")
 
 
 @app.get("/")

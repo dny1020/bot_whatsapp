@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 from ..models import Conversation, User
 
+
 def get_or_create_user(phone, db):
     """Obtener usuario existente o crear uno nuevo"""
     user = db.query(User).filter(User.phone == phone).first()
@@ -32,7 +33,6 @@ def get_or_create_user(phone, db):
 
 def get_or_create_conversation(phone, db):
     """Obtener conversación activa o crear una nueva"""
-    # Buscar conversación activa
     conversation = (
         db.query(Conversation)
         .filter(
@@ -43,7 +43,7 @@ def get_or_create_conversation(phone, db):
         .first()
     )
 
-    # Verificar si expiró
+    # Cerrar si expiró el TTL
     if conversation and conversation.ttl_expires_at:
         if datetime.utcnow() > conversation.ttl_expires_at:
             conversation.status = "closed"
@@ -53,9 +53,12 @@ def get_or_create_conversation(phone, db):
     # Crear nueva si no existe
     if not conversation:
         user = db.query(User).filter(User.phone == phone).first()
-        
-        conv_id = f"{phone.replace('+', '')}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:6]}"
-        
+
+        conv_id = (
+            f"{phone.replace('+', '')}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            f"_{uuid.uuid4().hex[:6]}"
+        )
+
         conversation = Conversation(
             id=conv_id,
             user_id=user.id if user else 0,
@@ -82,7 +85,7 @@ def get_or_create_conversation(phone, db):
 
 
 def update_conversation_state(conversation, state, db, context=None):
-    """Actualizar estado de la conversacion"""
+    """Actualizar estado y contexto de la conversación"""
     conversation.state = state
 
     if context:

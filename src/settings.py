@@ -6,6 +6,7 @@ import os
 import re
 import json
 import logging
+import logging.handlers
 import hashlib
 from datetime import datetime
 
@@ -22,6 +23,7 @@ load_dotenv()
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER", "")
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "secret")
 
 # App
 ENV = os.getenv("ENV", "development")
@@ -41,13 +43,28 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 
 # =============================================================================
-# Logging simple
+# Logging
 # =============================================================================
 
-logging.basicConfig(
-    level=getattr(logging, LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, "app.log")
+
+_log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+_log_level = getattr(logging, LOG_LEVEL)
+
+_console_handler = logging.StreamHandler()
+_console_handler.setLevel(_log_level)
+_console_handler.setFormatter(logging.Formatter(_log_format))
+
+_file_handler = logging.handlers.RotatingFileHandler(
+    LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
 )
+_file_handler.setLevel(_log_level)
+_file_handler.setFormatter(logging.Formatter(_log_format))
+
+logging.basicConfig(level=_log_level, handlers=[_console_handler, _file_handler])
+
 
 def get_logger(name):
     """Obtener logger"""

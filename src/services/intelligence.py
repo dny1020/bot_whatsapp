@@ -1,9 +1,5 @@
 """
-Inteligencia local - Features ligeros sin LLM
-- Fuzzy matching para typos
-- Cache de respuestas LLM
-- Keyword triggers para FAQs
-- Sentiment analysis
+Inteligencia local del bot - funciones genéricas reutilizables
 """
 
 import re
@@ -12,14 +8,14 @@ from datetime import datetime, timedelta
 from rapidfuzz import fuzz, process
 from textblob import TextBlob
 
-from ..settings import get_logger
+from ..settings import business_config, get_logger
 
 logger = get_logger(__name__)
 
+# Datos cargados desde config/settings.json (editables sin tocar código)
+_business = business_config.get("business", {})
+_business_phone = _business.get("phone", "")
 
-# =============================================================================
-# Cache de respuestas LLM
-# =============================================================================
 
 _response_cache = {}
 CACHE_TTL_HOURS = 24
@@ -70,21 +66,10 @@ def _cleanup_cache():
         del _response_cache[k]
 
 
-# =============================================================================
-# Fuzzy Matching para typos
-# =============================================================================
 
 def fuzzy_match_option(user_input, options, threshold=70):
     """
     Buscar la mejor coincidencia fuzzy para el input del usuario
-    
-    Args:
-        user_input: texto del usuario
-        options: lista de opciones validas (ej: titulos de botones)
-        threshold: minimo score para considerar match (0-100)
-    
-    Returns:
-        (mejor_match, score) o (None, 0) si no hay match
     """
     if not user_input or not options:
         return None, 0
@@ -141,80 +126,31 @@ def correct_common_typos(text):
     return " ".join(corrected)
 
 
-# =============================================================================
-# Keyword Triggers - Respuestas automaticas sin LLM
-# =============================================================================
-
-KEYWORD_RESPONSES = {
-    # Saludos
-    r"\b(hola|buenos dias|buenas tardes|buenas noches|hey)\b": None,  # None = ir a welcome
-    
-    # Horarios
-    r"\b(horario|hora|atencion|abierto)\b": 
-        "Nuestro horario de atencion es 24/7. Un agente siempre esta disponible para ayudarle.",
-    
-    # Contacto
-    r"\b(telefono|llamar|numero|contacto|whatsapp)\b":
-        "Puede contactarnos por este WhatsApp o llamar al +1-800-XXX-XXXX.",
-    
-    # Urgencias
-    r"\b(urgente|emergencia|sin servicio|no funciona nada)\b":
-        "Entendemos que es urgente. Un tecnico revisara su caso de inmediato. Por favor indique su direccion.",
-    
-    # Agradecimientos
-    r"\b(gracias|muchas gracias|excelente|genial)\b":
-        "Con gusto! Estamos para ayudarle. Escriba *menu* si necesita algo mas.",
-    
-    # Despedidas
-    r"\b(adios|bye|chao|hasta luego)\b":
-        "Hasta pronto! Fue un placer atenderle. Escriba *hola* cuando nos necesite.",
-    
-    # Precios
-    r"\b(precio|costo|cuanto cuesta|cuanto vale|tarifa)\b":
-        "Tenemos planes desde $20/mes. Escriba *2* para ver todos nuestros planes.",
-    
-    # Pagos
-    r"\b(pagar|pago|donde pago|como pago)\b":
-        "Puede pagar por transferencia o tarjeta. Escriba *3* para opciones de pago.",
-    
-    # Velocidad/Internet
-    r"\b(velocidad|megas|rapido|lento|internet)\b":
-        "Si tiene problemas de velocidad, escriba *1* para soporte tecnico. Si quiere ver planes, escriba *2*.",
-}
+# Keyword responses cargadas desde config (editables por negocio)
+_raw_keywords = business_config.get("keyword_responses", {})
+KEYWORD_RESPONSES = {}
+for pattern, response in _raw_keywords.items():
+    # Reemplazar placeholders de negocio en las respuestas
+    if isinstance(response, str):
+        response = response.replace("{business_phone}", _business_phone)
+    KEYWORD_RESPONSES[pattern] = response
 
 
 def check_keyword_trigger(message):
-    """
-    Verificar si el mensaje activa una respuesta automatica
-    
-    Returns:
-        str: respuesta automatica, None si debe ir a welcome, False si no hay trigger
-    """
+    """Verificar si el mensaje activa una respuesta automática"""
     message_lower = message.lower().strip()
-    
+
     for pattern, response in KEYWORD_RESPONSES.items():
         if re.search(pattern, message_lower, re.IGNORECASE):
             logger.info(f"Keyword trigger: {pattern}")
-            return response  # None significa ir a welcome
-    
-    return False  # No hubo match
+            return response  # None = ir a welcome
 
+    return False
 
-# =============================================================================
-# Sentiment Analysis
-# =============================================================================
 
 def analyze_sentiment(text):
     """
     Analizar sentimiento del mensaje
-    
-    Returns:
-        dict: {
-            "polarity": float (-1 a 1),
-            "is_negative": bool,
-            "is_frustrated": bool,
-            "needs_human": bool
-        }
     """
     try:
         blob = TextBlob(text)
@@ -269,10 +205,6 @@ def get_empathetic_prefix(sentiment):
     return ""
 
 
-# =============================================================================
-# Entity Extraction
-# =============================================================================
-
 def extract_entities(text):
     """
     Extraer entidades del texto (telefono, email, fecha)
@@ -303,22 +235,9 @@ def extract_entities(text):
     return entities
 
 
-# =============================================================================
-# Extraccion de Nickname
-# =============================================================================
-
 def extract_nickname(text):
     """
     Extraer nickname/nombre del mensaje del usuario
-    
-    Patrones soportados:
-    - "hola soy Carlos" -> Carlos
-    - "buenas, Juan Perez" -> Juan
-    - "me llamo Maria" -> Maria
-    - "soy el ingeniero Pedro" -> Pedro
-    
-    Returns:
-        str: nickname extraido o None
     """
     text = text.strip()
     
@@ -347,90 +266,44 @@ def extract_nickname(text):
     return None
 
 
-# =============================================================================
-# Respuestas Progresivas
-# =============================================================================
+# Respuestas progresivas cargadas desde config (editables por negocio)
+_raw_progressive = business_config.get("progressive_responses", {})
+PROGRESSIVE_RESPONSES = {}
+for topic, levels in _raw_progressive.items():
+    # JSON keys son strings, convertir a int para acceso por nivel
+    PROGRESSIVE_RESPONSES[topic] = {int(k): v for k, v in levels.items()}
 
-# Respuestas con 3 niveles de detalle
-PROGRESSIVE_RESPONSES = {
-    "reiniciar_router": {
-        1: "Para reiniciar su router:\n1. Desconecte el cable de corriente\n2. Espere 30 segundos\n3. Vuelva a conectar\n4. Espere 2 minutos a que las luces se estabilicen\n\nEsto resuelve el 80% de los problemas de conexion.",
-        2: "Desconecte el router 30 seg y reconecte. Espere 2 min.",
-        3: "Reinicie el router (desconectar/reconectar)."
-    },
-    "verificar_pago": {
-        1: "Para verificar su pago:\n1. Entre a pagos.ejemplo.com\n2. Ingrese su numero de cuenta\n3. Vera el historial de pagos\n\nSi pago recientemente, puede tardar 24-48h en reflejarse.",
-        2: "Revise en pagos.ejemplo.com con su numero de cuenta.",
-        3: "Consulte pagos.ejemplo.com"
-    },
-    "sin_servicio": {
-        1: "Entiendo que no tiene servicio. Vamos a verificar:\n1. Revise que el router tenga luces encendidas\n2. Verifique que los cables esten bien conectados\n3. Intente reiniciar el router\n\nSi el problema persiste, crearemos un ticket de soporte.",
-        2: "Verifique luces del router y cables. Si persiste, creamos ticket.",
-        3: "Revise router. Creamos ticket si no funciona."
-    },
-    "cambiar_plan": {
-        1: "Para cambiar de plan:\n1. Escriba *2* para ver planes disponibles\n2. Seleccione el plan deseado\n3. Un asesor se comunicara para confirmar el cambio\n\nEl cambio se aplica en su proximo ciclo de facturacion.",
-        2: "Escriba *2* para ver planes. Un asesor confirmara el cambio.",
-        3: "Escriba *2* y seleccione su nuevo plan."
-    }
-}
+# Patrones de detección de tema (configurables)
+TOPIC_PATTERNS = business_config.get("progressive_topics", {})
 
 
 def get_progressive_response(topic, interaction_count):
-    """
-    Obtener respuesta segun nivel de interaccion
-    
-    Args:
-        topic: tema de la respuesta (key en PROGRESSIVE_RESPONSES)
-        interaction_count: numero de veces que se ha preguntado lo mismo
-    
-    Returns:
-        str: respuesta apropiada al nivel, o None si no existe el topic
-    """
+    """Obtener respuesta según nivel de interacción (1=detallada, 3=breve)"""
     if topic not in PROGRESSIVE_RESPONSES:
         return None
-    
+
     responses = PROGRESSIVE_RESPONSES[topic]
-    
-    # Nivel 1: primera vez (explicacion completa)
-    # Nivel 2: segunda vez (version corta)
-    # Nivel 3+: tercera vez o mas (accion directa)
     level = min(interaction_count, 3)
-    
+
     return responses.get(level, responses.get(3))
 
 
 def detect_topic_for_progressive(message):
-    """
-    Detectar el tema del mensaje para respuestas progresivas
-    
-    Returns:
-        str: topic key o None
-    """
+    """Detectar tema del mensaje para respuestas progresivas"""
     message_lower = message.lower()
-    
-    topic_patterns = {
-        "reiniciar_router": ["reiniciar", "reinicio", "resetear", "reset", "router"],
-        "verificar_pago": ["pago", "pague", "transferencia", "deposito", "abono"],
-        "sin_servicio": ["sin servicio", "no funciona", "no tengo internet", "se cayo", "no hay conexion"],
-        "cambiar_plan": ["cambiar plan", "otro plan", "upgrade", "mejorar plan", "subir plan"]
-    }
-    
-    for topic, keywords in topic_patterns.items():
+
+    for topic, keywords in TOPIC_PATTERNS.items():
         if any(kw in message_lower for kw in keywords):
             return topic
-    
+
     return None
 
 
 def adjust_response_length(response, user_message_length):
     """
     Ajustar longitud de respuesta segun el estilo del usuario (lenguaje espejo)
-    
-    Si el usuario escribe corto, responder corto.
-    Si escribe largo, dar mas detalle.
     """
-    # Si el usuario escribe muy corto (< 20 chars), acortar respuesta
+
     if user_message_length < 20:
         # Tomar solo la primera oracion o linea
         lines = response.split('\n')

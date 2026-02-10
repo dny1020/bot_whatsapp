@@ -4,13 +4,16 @@ Modelos de base de datos y esquemas de respuesta
 
 from datetime import datetime
 from typing import Optional
+
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, JSON, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import DeclarativeBase, relationship
 from pydantic import BaseModel
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    """Base para todos los modelos SQLAlchemy"""
+    pass
 
 
 # =============================================================================

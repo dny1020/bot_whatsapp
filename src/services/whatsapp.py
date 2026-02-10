@@ -22,8 +22,15 @@ if TWILIO_ACCOUNT_SID:
         "Authorization": f"Basic {b64encode(auth_string.encode()).decode()}",
         "Content-Type": "application/x-www-form-urlencoded",
     }
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
+# ... (imports)
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    reraise=True
+)
 async def send_message(to, message):
     """Enviar mensaje de texto por WhatsApp"""
     if not to.startswith("whatsapp:"):
@@ -42,24 +49,18 @@ async def send_message(to, message):
         "Body": message,
     }
 
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{_base_url}/Messages.json",
-                data=payload,
-                headers=_headers,
-                timeout=30.0,
-            )
-            
-            result = response.json()
-            
-            if response.status_code >= 400:
-                logger.error(f"Error enviando mensaje: {result.get('message')}")
-            
-            return result
-    except Exception as e:
-        logger.error(f"Error en WhatsApp: {e}")
-        return {"error": str(e)}
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{_base_url}/Messages.json",
+            data=payload,
+            headers=_headers,
+            timeout=30.0,
+        )
+        
+        # Raise for status code >= 400
+        response.raise_for_status()
+        
+        return response.json()
 
 
 async def send_menu(to, body, buttons, header=None):

@@ -27,13 +27,14 @@ build/
 venv/
 env/
 ENV/
-.venv
+.venv/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # Testing
 tests/
@@ -45,11 +46,18 @@ htmlcov/
 logs/
 *.log
 
-# Data
+# Data (montado como volume)
 data/
 backups/
 *.sql
 *.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# Config y docs (montados como volume, no copiar al image)
+config/
+docs/
 
 # OS
 .DS_Store
@@ -58,8 +66,19 @@ Thumbs.db
 # Docker
 docker-compose*.yml
 Dockerfile*
+deploy.sh
 
 # Temp
 tmp/
 temp/
 *.tmp
+
+# Agent/AI
+.agent/
+.gemini/
+
+# Misc
+output_server.txt
+conversations.txt
+mejoras.txt
+*_logs.txt

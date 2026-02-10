@@ -22,5 +22,80 @@
         "enabled": true
       }
     ]
+  },
+  "bot": {
+    "system_prompt": "Eres el Asistente Virtual de soporte para {business_name}.\nResponde de forma profesional, cortés y CONCISA (máximo 3-4 oraciones por respuesta).\n\nCONTEXTO:\n{context}\n\nREGLAS:\n- Responde SOLO basado en el contexto. Si no hay info, ofrece transferir a un agente.\n- Usa español profesional y pasos numerados cuando sea necesario.\n- SÉ BREVE: respuestas cortas y directas.\n- NO menciones procedimientos internos ni prometas tiempos exactos.",
+    "exit_commands": [
+      "salir",
+      "cancelar",
+      "menu",
+      "inicio",
+      "0",
+      "volver",
+      "atras"
+    ]
+  },
+  "keyword_responses": {
+    "\\b(hola|buenos dias|buenas tardes|buenas noches|hey)\\b": null,
+    "\\b(horario|hora|atencion|abierto)\\b": "Nuestro horario de atencion es 24/7. Un agente siempre esta disponible para ayudarle.",
+    "\\b(telefono|llamar|numero|contacto|whatsapp)\\b": "Puede contactarnos por este WhatsApp o llamar al {business_phone}.",
+    "\\b(urgente|emergencia|sin servicio|no funciona nada)\\b": "Entendemos que es urgente. Un agente revisara su caso de inmediato. Por favor indique su direccion.",
+    "\\b(gracias|muchas gracias|excelente|genial)\\b": "Con gusto! Estamos para ayudarle. Escriba *menu* si necesita algo mas.",
+    "\\b(adios|bye|chao|hasta luego)\\b": "Hasta pronto! Fue un placer atenderle. Escriba *hola* cuando nos necesite.",
+    "\\b(precio|costo|cuanto cuesta|cuanto vale|tarifa)\\b": "Tenemos varias opciones disponibles. Escriba *2* para ver todos nuestros planes.",
+    "\\b(pagar|pago|donde pago|como pago)\\b": "Puede pagar por transferencia o tarjeta. Escriba *3* para opciones de pago.",
+    "\\b(velocidad|megas|rapido|lento|internet)\\b": "Si tiene problemas, escriba *1* para soporte tecnico. Si quiere ver planes, escriba *2*."
+  },
+  "progressive_responses": {
+    "reiniciar_router": {
+      "1": "Para reiniciar su router:\n1. Desconecte el cable de corriente\n2. Espere 30 segundos\n3. Vuelva a conectar\n4. Espere 2 minutos a que las luces se estabilicen\n\nEsto resuelve el 80% de los problemas de conexion.",
+      "2": "Desconecte el router 30 seg y reconecte. Espere 2 min.",
+      "3": "Reinicie el router (desconectar/reconectar)."
+    },
+    "verificar_pago": {
+      "1": "Para verificar su pago:\n1. Entre a pagos.ejemplo.com\n2. Ingrese su numero de cuenta\n3. Vera el historial de pagos\n\nSi pago recientemente, puede tardar 24-48h en reflejarse.",
+      "2": "Revise en pagos.ejemplo.com con su numero de cuenta.",
+      "3": "Consulte pagos.ejemplo.com"
+    },
+    "sin_servicio": {
+      "1": "Entiendo que no tiene servicio. Vamos a verificar:\n1. Revise que el equipo tenga luces encendidas\n2. Verifique que los cables esten bien conectados\n3. Intente reiniciar el equipo\n\nSi el problema persiste, crearemos un ticket de soporte.",
+      "2": "Verifique luces del equipo y cables. Si persiste, creamos ticket.",
+      "3": "Revise equipo. Creamos ticket si no funciona."
+    },
+    "cambiar_plan": {
+      "1": "Para cambiar de plan:\n1. Escriba *2* para ver planes disponibles\n2. Seleccione el plan deseado\n3. Un asesor se comunicara para confirmar el cambio\n\nEl cambio se aplica en su proximo ciclo de facturacion.",
+      "2": "Escriba *2* para ver planes. Un asesor confirmara el cambio.",
+      "3": "Escriba *2* y seleccione su nuevo plan."
+    }
+  },
+  "progressive_topics": {
+    "reiniciar_router": [
+      "reiniciar",
+      "reinicio",
+      "resetear",
+      "reset",
+      "router"
+    ],
+    "verificar_pago": [
+      "pago",
+      "pague",
+      "transferencia",
+      "deposito",
+      "abono"
+    ],
+    "sin_servicio": [
+      "sin servicio",
+      "no funciona",
+      "no tengo internet",
+      "se cayo",
+      "no hay conexion"
+    ],
+    "cambiar_plan": [
+      "cambiar plan",
+      "otro plan",
+      "upgrade",
+      "mejorar plan",
+      "subir plan"
+    ]
   }
 }

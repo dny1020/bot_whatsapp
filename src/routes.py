@@ -5,22 +5,36 @@ Rutas de la API
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Security
+from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from .db import get_db
 from .models import User, SupportTicket, Message
 from .models import SupportTicketResponse, UserResponse, TicketStats, MessageAnalytics
+from .settings import ADMIN_API_KEY
 
 router = APIRouter()
+
+# Seguridad: API Key Header
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    """Verificar API Key para rutas administrativas"""
+    if api_key != ADMIN_API_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Credenciales inválidas"
+        )
+    return api_key
 
 
 # =============================================================================
 # TICKETS
 # =============================================================================
 
-@router.get("/tickets", response_model=List[SupportTicketResponse])
+@router.get("/tickets", response_model=List[SupportTicketResponse], dependencies=[Depends(verify_api_key)])
 async def list_tickets(
     status: Optional[str] = None,
     issue_type: Optional[str] = None,
@@ -39,7 +53,7 @@ async def list_tickets(
     return tickets
 
 
-@router.get("/tickets/{ticket_id}", response_model=SupportTicketResponse)
+@router.get("/tickets/{ticket_id}", response_model=SupportTicketResponse, dependencies=[Depends(verify_api_key)])
 async def get_ticket(ticket_id: str, db: Session = Depends(get_db)):
     """Obtener ticket por ID"""
     ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == ticket_id).first()
@@ -50,7 +64,7 @@ async def get_ticket(ticket_id: str, db: Session = Depends(get_db)):
     return ticket
 
 
-@router.get("/tickets/stats/summary", response_model=TicketStats)
+@router.get("/tickets/stats/summary", response_model=TicketStats, dependencies=[Depends(verify_api_key)])
 async def get_ticket_stats(db: Session = Depends(get_db)):
     """Obtener estadísticas de tickets"""
     total = db.query(SupportTicket).count()
@@ -82,14 +96,14 @@ async def get_ticket_stats(db: Session = Depends(get_db)):
 # USUARIOS Y ANALYTICS
 # =============================================================================
 
-@router.get("/users", response_model=List[UserResponse])
+@router.get("/users", response_model=List[UserResponse], dependencies=[Depends(verify_api_key)])
 async def list_users(limit: int = Query(50, le=100), db: Session = Depends(get_db)):
     """Listar usuarios"""
     users = db.query(User).order_by(desc(User.created_at)).limit(limit).all()
     return users
 
 
-@router.get("/analytics/messages", response_model=MessageAnalytics)
+@router.get("/analytics/messages", response_model=MessageAnalytics, dependencies=[Depends(verify_api_key)])
 async def get_message_analytics(
     days: int = Query(7, ge=1, le=30),
     db: Session = Depends(get_db)

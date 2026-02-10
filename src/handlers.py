@@ -24,8 +24,10 @@ from .services.intelligence import (
 
 logger = get_logger(__name__)
 
-# Comandos para volver al menu principal
-EXIT_COMMANDS = ["salir", "cancelar", "menu", "inicio", "0", "volver", "atras"]
+# Comandos para volver al menu (configurables desde settings.json)
+EXIT_COMMANDS = business_config.get("bot", {}).get(
+    "exit_commands", ["salir", "cancelar", "menu", "inicio", "0", "volver", "atras"]
+)
 
 
 async def process_message(phone, message, external_id=None):
@@ -236,6 +238,9 @@ async def _handle_llm_support(phone, message, conversation, db, nickname=None):
         # Agregar prefijo empatico si es necesario
         if empathetic_prefix:
             response = empathetic_prefix + response
+
+    # 4. Language Mirroring: Ajustar longitud según input del usuario
+    response = adjust_response_length(response, len(message))
 
     _save_message(conversation, "bot", response, None, db)
 

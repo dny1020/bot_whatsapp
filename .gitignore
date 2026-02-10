@@ -1,4 +1,4 @@
-# Production
+# Environment / Secrets
 .env
 .env.local
 .env.*.local
@@ -14,7 +14,7 @@ logs/
 docker_logs.txt
 *_logs.txt
 
-# Data
+# Data (runtime, local SQLite)
 data/
 *.db
 *.sqlite
@@ -26,6 +26,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.egg
 *.egg-info/
 dist/
 build/
@@ -34,7 +35,7 @@ build/
 venv/
 env/
 ENV/
-.venv
+.venv/
 
 # IDE
 .vscode/
@@ -43,6 +44,11 @@ ENV/
 *.swo
 *~
 
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -50,10 +56,15 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 
-# Old docs
-README.old.md
+# Agent/AI
+.agent/
+.gemini/
 
+# Misc / temp
+tmp/
+temp/
+*.tmp
 output_server.txt
 conversations.txt
-deploy.sh
 mejoras.txt
+README.old.md
